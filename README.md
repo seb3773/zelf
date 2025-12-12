@@ -16,6 +16,18 @@ zELF is an ELF64 packer/modifier for Linux x86_64, inspired by UPX but with a mo
 - Targets Linux x86_64, ELF64 only. ELF 32-bit is not supported.
 - Please note that zELF is not designed for code obfuscation or concealment. All source code is openly available, and even the more exotic compression format can be integrated and parsed by any analysis tool thanks to the provided sources. The goal of this packer is binary size reduction and efficient runtime unpacking—not evasion of antivirus software or distribution of malicious code. It is intended for legitimate use cases such as embedded systems, demos, general binary optimization or educational purposes like studying ELF structure and advanced packing techniques.
 
+
+## Why zELF exists
+Executable packers have always fascinated me — not just as tools, but as tiny pieces of engineering magic. They sit at the intersection of compression, binary formats, low‑level systems, and a bit of creative hacking.  
+Among them, UPX (the godfather of executable packing!) stands as a masterpiece. It’s fast, reliable, brilliantly engineered, and has been the reference for decades.  
+The goal of zELF is not to compete with upx, but to offer something different: a packer that is fully extensible, easy to understand, and fun to hack on.  
+I wanted a packer that I could fully understand, fully control, and easily extend.  
+I wanted a packer where adding a new compression algorithm is straightforward, documented, and encouraged. I wanted a codebase that reveals how ELF binaries work internally, how segments are mapped, how relocations are applied, and how an in‑memory unpacking stub operates. I wanted something I could fully control, adapt, and experiment with — especially for my own binaries.  
+  
+zELF is also a playground for integrating historical compression algorithms from the 8‑bit and 16‑bit world, alongside modern codecs like ZSTD or LZMA. It’s a learning tool, a research project, and a practical packer all at once.  
+It is released under a fully permissive license (WTFYW), because creativity and experimentation should never be restricted :-)  
+  
+
 ## Build
 You can use the interactive menu to configure and launch the build:
 ```bash
