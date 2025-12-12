@@ -456,7 +456,6 @@ test_codec "mycodec" "/usr/bin/ls"
 ## 9. Development Conventions
 
 - **Language**: C99 for the packer, C + inline ASM for the stub.
-- **Style**: 4-space indentation, opening brace on the same line.
 - **Comments**: Technical English.
 - **Performance**:
   - Prefer `static inline` in the stub.
