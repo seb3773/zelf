@@ -9,8 +9,8 @@ This document is the exhaustive reference for developing, maintaining, and deepl
 zELF is a modular packer for Linux x86_64. The architecture cleanly separates packing logic (host/userland) from loading logic (nostdlib stub injected into the packed binary).
 
 ```mermaid
-graph TB
-    subgraph "Packer (Build Time)"
+flowchart TB
+    subgraph Packer_Build_Time
         CLI[CLI Parser] --> ELF_IN[ELF Reader/Validator]
         ELF_IN --> STRIP[Super-Strip]
         STRIP --> FILTER[Filter Selection (ML/Manual)]
@@ -20,7 +20,7 @@ graph TB
         BUILD --> OUT[Packed ELF Output]
     end
 
-    subgraph "Loader (Runtime)"
+    subgraph Loader_Runtime
         ENTRY[Check OS/Arch] --> SYSCALLS[Direct Syscalls]
         SYSCALLS --> DECOMP[Decompression]
         DECOMP --> UNFILTER[Reverse Filter (BCJ/Kanzi)]
