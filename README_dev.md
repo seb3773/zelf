@@ -11,22 +11,21 @@ zELF is a modular packer for Linux x86_64. The architecture cleanly separates pa
 ```mermaid
 flowchart TB
     subgraph Packer_Build_Time
-        CLI[CLI Parser] --> ELF_IN[ELF Reader/Validator]
-        ELF_IN --> STRIP[Super-Strip]
-        STRIP --> FILTER[Filter Selection (ML/Manual)]
-        FILTER --> COMPRESS[Compression Dispatch]
-        COMPRESS --> STUB_SEL[Stub Selection]
-        STUB_SEL --> BUILD[ELF Builder]
-        BUILD --> OUT[Packed ELF Output]
+        CLI["CLI Parser"] --> ELF_IN["ELF Reader/Validator"]
+        ELF_IN --> STRIP["Super-Strip"]
+        STRIP --> FILTER["Filter Selection (ML/Manual)"]
+        FILTER --> COMPRESS["Compression Dispatch"]
+        COMPRESS --> STUB_SEL["Stub Selection"]
+        STUB_SEL --> BUILD["ELF Builder"]
+        BUILD --> OUT["Packed ELF Output"]
     end
-
     subgraph Loader_Runtime
-        ENTRY[Check OS/Arch] --> SYSCALLS[Direct Syscalls]
-        SYSCALLS --> DECOMP[Decompression]
-        DECOMP --> UNFILTER[Reverse Filter (BCJ/Kanzi)]
-        UNFILTER --> MAP[Memory Mapping]
-        MAP --> RELOC[PIE Relocation]
-        RELOC --> HANDOFF[Stack/Reg Restore & Jump]
+        ENTRY["Check OS/Arch"] --> SYSCALLS["Direct Syscalls"]
+        SYSCALLS --> DECOMP["Decompression"]
+        DECOMP --> UNFILTER["Reverse Filter (BCJ/Kanzi)"]
+        UNFILTER --> MAP["Memory Mapping"]
+        MAP --> RELOC["PIE Relocation"]
+        RELOC --> HANDOFF["Stack/Reg Restore & Jump"]
     end
 ```
 
