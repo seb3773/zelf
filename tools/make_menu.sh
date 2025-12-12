@@ -31,6 +31,8 @@ run_make() {
 
 run_quick_tests() {
   echo "==> Running quick tests: $ROOT_DIR/test_all.sh"
+  # Ensure nested script is executable when invoked by test_all.sh
+  chmod +x "$ROOT_DIR/build_and_test.sh" 2>/dev/null || true
   if (cd "$ROOT_DIR" && bash test_all.sh); then
     echo "==> Quick tests completed successfully"
   else
