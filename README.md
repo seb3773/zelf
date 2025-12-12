@@ -1,4 +1,8 @@
 # zELF — x86_64 ELF packer
+<p align="center">
+  <img src="logo_zelf.jpg" alt="zELF logo" width="200">
+</p>
+
 
 zELF is an ELF64 packer/modifier for Linux x86_64, inspired by UPX but with a modular structure: 16 compression codecs, the ability to integrate your own codecs, two executable filters (BCJ, KanziEXE) and automatic selection via ML models. It handles static and dynamic/PIE binaries, provides a `.zlf` archive mode, and a `-best` mode that explores multiple combinations to maximize ratio.
 
@@ -24,6 +28,8 @@ The goal of zELF is not to compete with upx, but to offer something different: a
 I wanted a packer that I could fully understand, fully control, and easily extend.  
 I wanted a packer where adding a new compression algorithm is straightforward, documented, and encouraged.  
 I wanted a codebase that reveals how ELF binaries work internally, how segments are mapped, how relocations are applied, and how an in‑memory unpacking stub operates. I wanted something I could fully control, adapt, and experiment with — especially for my own binaries.  
+
+Another aspect I wanted to explore is automatic codec selection. zELF includes lightweight machine‑learning predictors trained on more than 2,000 Linux binaries (mostly from a base Debian system plus a variety of common executables). These predictors estimate which codec is likely to produce the smallest packed output, based on simple features extracted from the input binary. They’re not meant to be “AI magic”, just practical decision trees that save time and avoid brute‑forcing every codec when you don’t need to.  
   
 zELF is also a playground for integrating historical compression algorithms from the 8‑bit and 16‑bit world, alongside modern codecs like ZSTD or LZMA. It’s a learning tool, a research project, and a practical packer all at once.  
 It is released under a fully permissive license (WTFYW), because creativity and experimentation should never be restricted :-)  
