@@ -22,7 +22,8 @@ Executable packers have always fascinated me — not just as tools, but as tiny 
 Among them, UPX (the godfather of executable packing!) stands as a masterpiece. It’s fast, reliable, brilliantly engineered, and has been the reference for decades.  
 The goal of zELF is not to compete with upx, but to offer something different: a packer that is fully extensible, easy to understand, and fun to hack on.  
 I wanted a packer that I could fully understand, fully control, and easily extend.  
-I wanted a packer where adding a new compression algorithm is straightforward, documented, and encouraged. I wanted a codebase that reveals how ELF binaries work internally, how segments are mapped, how relocations are applied, and how an in‑memory unpacking stub operates. I wanted something I could fully control, adapt, and experiment with — especially for my own binaries.  
+I wanted a packer where adding a new compression algorithm is straightforward, documented, and encouraged.  
+I wanted a codebase that reveals how ELF binaries work internally, how segments are mapped, how relocations are applied, and how an in‑memory unpacking stub operates. I wanted something I could fully control, adapt, and experiment with — especially for my own binaries.  
   
 zELF is also a playground for integrating historical compression algorithms from the 8‑bit and 16‑bit world, alongside modern codecs like ZSTD or LZMA. It’s a learning tool, a research project, and a practical packer all at once.  
 It is released under a fully permissive license (WTFYW), because creativity and experimentation should never be restricted :-)  
@@ -99,6 +100,22 @@ Main user options:
 - Keeps only the smallest binary.
 - `--exe-filter` is ignored in this mode.
 
+  
+## Contributing to zELF
+zELF is an open project built with a simple philosophy: learn, experiment, and have fun with executable packing.  
+It isn’t meant to be a competitor to anything, nor a polished commercial tool. It’s a playground for people who enjoy:  
+  exploring ELF internals,  
+  writing or integrating compression algorithms,  
+  experimenting with filters and codecs,  
+  studying how a loader reconstructs a process in memory,  
+  or simply understanding how packers work under the hood.  
+  
+The codebase is intentionally clean (I hope so), documented, and modular so that anyone can extend it — whether for educational purposes or for practical use. If you want to add a codec, improve the stub, tweak the heuristics, or build your own features on top of zELF, you’re welcome to do so.  
+There is no strict roadmap, no corporate goals, and no pressure. Just a space for curious developers to explore executable packing and contribute ideas, improvements, or experiments :-)  
+
+If that sounds like your kind of project, feel free to open issues, submit pull requests, or simply discuss ideas. Every contribution — big or small — is appreciated.  
+
+  
 ## Developer docs
 For exhaustive architecture and development details:
 - **[README_dev.md](README_dev.md)**: Comprehensive developer guide (Architecture, Codecs, ML, Stubs).
