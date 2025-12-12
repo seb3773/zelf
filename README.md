@@ -37,7 +37,7 @@ It is released under a fully permissive license (WTFYW), because creativity and 
   
 ## Benchmarks & Statistics
 
-zELF includes 16 compression codecs and several optional EXE filters.  
+zELF includes 16 compression codecs and two EXE filters.  
 To better understand their behavior, more than 2000 Linux binaries were analyzed
 (mostly from a base Debian system plus a variety of common executables).
 
