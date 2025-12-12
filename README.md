@@ -20,7 +20,7 @@ zELF is an ELF64 packer/modifier for Linux x86_64, inspired by UPX but with a mo
 - Targets Linux x86_64, ELF64 only. ELF 32-bit is not supported.
 - Please note that zELF is not designed for code obfuscation or concealment. All source code is openly available, and even the more exotic compression format can be integrated and parsed by any analysis tool thanks to the provided sources. The goal of this packer is binary size reduction and efficient runtime unpacking—not evasion of antivirus software or distribution of malicious code. It is intended for legitimate use cases such as embedded systems, demos, general binary optimization or educational purposes like studying ELF structure and advanced packing techniques.
 
-
+  
 ## Why zELF exists
 Executable packers have always fascinated me — not just as tools, but as tiny pieces of engineering magic. They sit at the intersection of compression, binary formats, low‑level systems, and a bit of creative hacking.  
 Among them, UPX (the godfather of executable packing!) stands as a masterpiece. It’s fast, reliable, brilliantly engineered, and has been the reference for decades.  
@@ -34,7 +34,85 @@ Another aspect I wanted to explore is automatic codec selection. zELF includes l
 zELF is also a playground for integrating historical compression algorithms from the 8‑bit and 16‑bit world, alongside modern codecs like ZSTD or LZMA. It’s a learning tool, a research project, and a practical packer all at once.  
 It is released under a fully permissive license (WTFYW), because creativity and experimentation should never be restricted :-)  
   
+  
+## Benchmarks & Statistics
 
+zELF includes 16 compression codecs and several optional EXE filters.  
+To better understand their behavior, more than 2000 Linux binaries were analyzed
+(mostly from a base Debian system plus a variety of common executables).
+
+The `stats/results/` directory contains all datasets and graphs used for evaluating:
+
+- compression ratios
+- ratios by input size range
+- speed benchmarks
+- stub overhead
+- ML predictor training data
+
+Below are some representative graphs extracted from these datasets.
+
+---
+
+### Average compression ratios
+
+This graph shows the average compression ratio achieved by each codec across the
+entire dataset of 2000+ binaries.
+
+<p align="center">
+  <img src="stats/results/average_ratios.png" width="500">
+</p>
+
+---
+
+### Best codec by input size range
+
+Different codecs behave differently depending on the size of the input binary.
+This graph illustrates these variations and explains how the `-best` mode
+selects the most promising codec without brute‑forcing all of them.
+
+<p align="center">
+  <img src="stats/results/performance_by_size_range.png" width="500">
+</p>
+
+---
+
+### Speed vs compression ratio
+
+Each codec has its own trade‑off between compression speed and final size.
+This graph provides an overview of these differences.
+
+<p align="center">
+  <img src="stats/results/speed_speed_vs_ratio.png" width="500">
+</p>
+
+---
+
+### Stub overhead
+
+Each codec requires a different unpacking stub size.  
+This graph shows the overhead added by each stub before compression.
+
+<p align="center">
+  <img src="stats/results/stub_overhead.png" width="500">
+</p>
+
+---
+
+### Datasets
+
+All raw statistics are available in the `stats/results/` directory:
+- `average_compression_ratios.csv` — average ratios per codec  
+- `rankings_by_size.csv` — best codec per size range  
+- `speed_results_filtered.csv` — speed benchmarks  
+- `ratio_distributions.png` — ratio variance  
+- `predictor_rules.json` — ML decision trees  
+- `predictor.py` — predictor implementation  
+
+These datasets are used internally by zELF to improve heuristics and codec
+selection, and are provided for transparency and experimentation.  
+  
+
+  
 ## Build
 You can use the interactive menu to configure and launch the build:
 ```bash
