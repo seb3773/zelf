@@ -85,14 +85,14 @@ ALGOS = {
             'src/decompressors/lzsa/decompressor/expand_block_v1.c',
             'src/decompressors/lzsa/decompressor/expand_block_v2.c',
             'src/decompressors/lzsa/decompressor/expand_context.c',
-            'src/decompressors/lzsa/compressor/frame.c'
+            'src/decompressors/lzsa/upstream/frame.c'
         ],
         'defines': ['CODEC_LZSA'],
         'extra_includes': [
              'src/decompressors/lzsa/libs/decompression',
              'src/decompressors/lzsa/decompressor',
-             'src/decompressors/lzsa/compressor',
-             'src/decompressors/lzsa/compressor/libdivsufsort/include'
+             'src/decompressors/lzsa/upstream',
+             'src/decompressors/lzsa/upstream/libdivsufsort/include'
         ]
     }
 }
