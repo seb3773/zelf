@@ -32,7 +32,7 @@ I wanted a codebase that reveals how ELF binaries work internally, how segments 
 Another aspect I wanted to explore is automatic codec selection. zELF includes lightweight machine‑learning predictors trained on more than 2,000 Linux binaries (mostly from a base Debian system plus a variety of common executables). These predictors estimate which codec is likely to produce the smallest packed output, based on simple features extracted from the input binary. They’re not meant to be “AI magic”, just practical decision trees that save time and avoid brute‑forcing every codec when you don’t need to.  
   
 zELF is also a playground for integrating historical compression algorithms from the 8‑bit and 16‑bit world, alongside modern codecs like ZSTD or LZMA. It’s a learning tool, a research project, and a practical packer all at once.  
-It is released under a fully permissive license (WTFYW), because creativity and experimentation should never be restricted :-)  
+It is released under a fully permissive license (TFYW), because creativity and experimentation should never be restricted :-)  
   
   
 ## Benchmarks & Statistics
