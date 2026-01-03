@@ -63,6 +63,8 @@ typedef struct {
   uint32_t raw_blocksize;
 } CSCDecProps;
 
+#define CSC_IOBUF_MULT 32u
+
 static void Dec_ReadProperties(CSCDecProps *props, const uint8_t *s) {
   props->dict_size = ((uint32_t)s[0] << 24) + ((uint32_t)s[1] << 16) +
                      ((uint32_t)s[2] << 8) + s[3];
@@ -94,10 +96,10 @@ intptr_t CSC_Dec_GetWorkspaceSize(const void *src, size_t src_len) {
   size += props.dict_size + 8;
 
   // rc_buf (Double buffer size to prevent overflow during interleaving)
-  size += props.csc_blocksize * 8;
+  size += (size_t)props.csc_blocksize * (size_t)CSC_IOBUF_MULT;
 
   // bc_buf (Double buffer size to prevent overflow during interleaving)
-  size += props.csc_blocksize * 8;
+  size += (size_t)props.csc_blocksize * (size_t)CSC_IOBUF_MULT;
 
   // swap_buf
   size += props.raw_blocksize;
@@ -139,6 +141,8 @@ static int ReadBytes(CSCDecState *s, uint8_t *b, uint32_t len) {
 static int FetchBlock(CSCDecState *s, int target_rc) {
   uint8_t *my_buf = target_rc ? s->rc_buf : s->bc_buf;
   uint32_t *my_limit = target_rc ? &s->rc_bufsize : &s->bc_bufsize;
+
+  const uint32_t iobuf_cap = s->csc_blocksize * (uint32_t)CSC_IOBUF_MULT;
 
   (void)my_buf;
   (void)my_limit;
@@ -195,7 +199,7 @@ static int FetchBlock(CSCDecState *s, int target_rc) {
       }
 
       uint32_t offset = *dest_filled;
-      if (offset + bsize > s->csc_blocksize * 8)
+      if (offset + bsize > iobuf_cap)
         return -1;
 
       if (ReadBytes(s, dest_buf + offset, bsize) < 0)
@@ -667,11 +671,11 @@ intptr_t CSC_Dec_Decompress(const void *src, size_t src_len, void *dst,
 
   s->rc_buf = p;
   // Double buffer size
-  p += props.csc_blocksize * 8;
+  p += (size_t)props.csc_blocksize * (size_t)CSC_IOBUF_MULT;
 
   s->bc_buf = p;
   // Double buffer size
-  p += props.csc_blocksize * 8;
+  p += (size_t)props.csc_blocksize * (size_t)CSC_IOBUF_MULT;
 
   s->swap_buf = p;
 
