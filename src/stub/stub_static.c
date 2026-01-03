@@ -547,7 +547,47 @@ static void stub_main_common(unsigned long *original_sp,
   }
 
   if (SEGMENT_COUNT > 0) {
-    elf_header_offset = segments[0].page_base;
+    if (is_pie) {
+      elf_header_offset = segments[0].page_base;
+    } else {
+      uint64_t min_base = (uint64_t)-1;
+      int have_off0 = 0;
+      for (int i = 0; i < SEGMENT_COUNT; i++) {
+        uint64_t base = (uint64_t)segments[i].page_base +
+                        (uint64_t)segments[i].page_offset -
+                        (uint64_t)segments[i].data_offset;
+        if (base < min_base)
+          min_base = base;
+        if (segments[i].data_offset == 0)
+          have_off0 = 1;
+      }
+      if (have_off0) {
+        elf_header_offset = min_base;
+      } else if (min_base != (uint64_t)-1) {
+        Elf64_Ehdr *eh_exec = (Elf64_Ehdr *)combined_data;
+        uint64_t need = (uint64_t)eh_exec->e_phoff +
+                        (uint64_t)eh_exec->e_phnum *
+                            (uint64_t)eh_exec->e_phentsize;
+        uint64_t map_base = min_base & ~0xFFFULL;
+        uint64_t delta = min_base - map_base;
+        uint64_t map_size = (need + delta + 0xFFFULL) & ~0xFFFULL;
+        void *m = (void *)z_syscall_mmap((void *)map_base, (size_t)map_size,
+                                         PROT_READ | PROT_WRITE,
+                                         MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
+                                         -1, 0);
+        if ((long)m < 0 || (uint64_t)(uintptr_t)m != map_base)
+          z_syscall_exit(6);
+        size_t copy_len = (size_t)map_size;
+        if (copy_len > original_size)
+          copy_len = original_size;
+        simple_memcpy((void *)min_base, combined_data, copy_len);
+        (void)z_syscall_mprotect((void *)map_base, (size_t)map_size,
+                                 PROT_READ | PROT_EXEC);
+        elf_header_offset = min_base;
+      } else {
+        elf_header_offset = segments[0].page_base;
+      }
+    }
   } else {
     if (is_pie) {
       elf_header_offset = 0;
@@ -556,14 +596,42 @@ static void stub_main_common(unsigned long *original_sp,
       Elf64_Phdr *ph_exec =
           (Elf64_Phdr *)((char *)combined_data + eh_exec->e_phoff);
       unsigned char *hdr = NULL;
+      uint64_t min_base = (uint64_t)-1;
+      int have_off0 = 0;
       for (int i = 0; i < eh_exec->e_phnum; i++) {
         Elf64_Phdr *p = &ph_exec[i];
         if (p->p_type != PT_LOAD)
           continue;
-        if (p->p_offset <= 0 && (uint64_t)0 < p->p_offset + p->p_filesz) {
-          hdr = (unsigned char *)(p->p_vaddr - p->p_offset);
-          break;
+        {
+          uint64_t base = (uint64_t)p->p_vaddr - (uint64_t)p->p_offset;
+          if (base < min_base)
+            min_base = base;
         }
+        if (p->p_offset == 0)
+          have_off0 = 1;
+      }
+      if (have_off0) {
+        hdr = (unsigned char *)min_base;
+      } else if (min_base != (uint64_t)-1) {
+        uint64_t need = (uint64_t)eh_exec->e_phoff +
+                        (uint64_t)eh_exec->e_phnum *
+                            (uint64_t)eh_exec->e_phentsize;
+        uint64_t map_base = min_base & ~0xFFFULL;
+        uint64_t delta = min_base - map_base;
+        uint64_t map_size = (need + delta + 0xFFFULL) & ~0xFFFULL;
+        void *m = (void *)z_syscall_mmap((void *)map_base, (size_t)map_size,
+                                         PROT_READ | PROT_WRITE,
+                                         MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
+                                         -1, 0);
+        if ((long)m < 0 || (uint64_t)(uintptr_t)m != map_base)
+          z_syscall_exit(6);
+        size_t copy_len = (size_t)map_size;
+        if (copy_len > original_size)
+          copy_len = original_size;
+        simple_memcpy((void *)min_base, combined_data, copy_len);
+        (void)z_syscall_mprotect((void *)map_base, (size_t)map_size,
+                                 PROT_READ | PROT_EXEC);
+        hdr = (unsigned char *)min_base;
       }
       if (!hdr) {
         uint64_t min_vaddr = (uint64_t)-1;
@@ -583,13 +651,6 @@ static void stub_main_common(unsigned long *original_sp,
   } else {
     elf_header_location = (unsigned char *)elf_header_offset;
   }
-
-#if !defined(CODEC_ZSTD)
-  if (z_syscall_mprotect((void *)((uint64_t)elf_header_location & ~0xFFF), 4096,
-                         PROT_READ) != 0) {
-    z_syscall_exit(1);
-  }
-#endif
 
   if (elf_header_location[0] != 0x7f || elf_header_location[1] != 'E' ||
       elf_header_location[2] != 'L' || elf_header_location[3] != 'F') {

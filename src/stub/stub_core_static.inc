@@ -446,7 +446,50 @@ static void stub_main_common(unsigned long *original_sp, uint64_t saved_rdx_kern
     }
 
 #if !defined(CODEC_ZSTD)
-    if (z_syscall_mprotect((void*)((uint64_t)elf_header_location & ~0xFFF), 4096, PROT_READ) != 0) {
+    int hdr_prot = PROT_READ;
+    {
+        uint64_t hdr_page = (uint64_t)elf_header_location & ~0xFFFULL;
+        if (SEGMENT_COUNT > 0) {
+            for (int i = 0; i < SEGMENT_COUNT; i++) {
+                uint64_t seg_start = is_pie ? (uint64_t)coherent_base + (uint64_t)segments[i].page_base
+                                            : (uint64_t)segments[i].page_base;
+                uint64_t seg_end = seg_start + (uint64_t)segments[i].map_size;
+                if (hdr_page >= seg_start && hdr_page < seg_end) {
+                    hdr_prot = (int)segments[i].prot;
+                    if (!(hdr_prot & PROT_READ)) hdr_prot |= PROT_READ;
+                    break;
+                }
+            }
+        } else {
+            Elf64_Ehdr *eh_exec = (Elf64_Ehdr *)combined_data;
+            Elf64_Phdr *ph_exec = (Elf64_Phdr *)((char *)combined_data + eh_exec->e_phoff);
+            for (int i = 0; i < eh_exec->e_phnum; i++) {
+                Elf64_Phdr *p = &ph_exec[i];
+                if (p->p_type != PT_LOAD) continue;
+
+                uint64_t seg_align = p->p_align;
+                if (seg_align < 0x1000) seg_align = 0x1000;
+                if ((seg_align & (seg_align - 1)) != 0) {
+                    uint64_t ap = 0x1000; while (ap < seg_align) ap <<= 1; seg_align = ap;
+                }
+
+                uint64_t page_base = p->p_vaddr & ~(seg_align - 1);
+                uint64_t map_size = ((p->p_vaddr + p->p_memsz + (seg_align - 1)) & ~(seg_align - 1)) - page_base;
+                uint64_t seg_start = is_pie ? (uint64_t)coherent_base + page_base : page_base;
+                uint64_t seg_end = seg_start + map_size;
+                if (hdr_page >= seg_start && hdr_page < seg_end) {
+                    int pprot = 0;
+                    if (p->p_flags & 4) pprot |= PROT_READ;
+                    if (p->p_flags & 2) pprot |= PROT_WRITE;
+                    if (p->p_flags & 1) pprot |= PROT_EXEC;
+                    if (!(pprot & PROT_READ)) pprot |= PROT_READ;
+                    hdr_prot = pprot;
+                    break;
+                }
+            }
+        }
+    }
+    if (z_syscall_mprotect((void*)((uint64_t)elf_header_location & ~0xFFF), 4096, hdr_prot) != 0) {
         z_syscall_exit(1);
     }
 #endif
