@@ -4,7 +4,7 @@
 </p>
 
 
-zELF is an ELF64 packer/modifier for Linux x86_64, inspired by UPX but with a modular structure: 22 compression codecs, the ability to integrate your own codecs, two executable filters (BCJ, KanziEXE) and automatic selection via ML models. It handles static and dynamic/PIE binaries, provides a `.zlf` archive mode, and brute-force helper modes (`-best`, `-crazy`) that explore multiple combinations to maximize ratio.
+zELF is an ELF64 packer for Linux x86_64, inspired by UPX but with a modular structure: 22 compression codecs, the ability to integrate your own codecs, two executable filters (BCJ, KanziEXE) and automatic selection via ML models. It handles static and dynamic/PIE binaries, provides a `.zlf` archive mode, and brute-force helper modes (`-best`, `-crazy`) that explore multiple combinations to maximize ratio.
 
 ## Key features
 - Multi-codec compression: LZ4, LZMA, ZSTD, Apultra, ZX7B, ZX0, BriefLZ, Exomizer, PowerPacker, Snappy, Doboz, QuickLZ, LZAV, Shrinkler, StoneCracker, LZSA2, CSC, Density, LZFSE, LZHAM, NZ1, RNC.
