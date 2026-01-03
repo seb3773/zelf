@@ -235,4 +235,4 @@ Other reference documents:
 - `doc/ANALYSE_SYSTEME_STATS_ML.md`: Statistical analyses.
 
 ## License
-Main license: TFYW (The Fuck You Want), subject to licenses of bundled components (see codec/filter sources).
+Main license: GPLv3, subject to licenses of bundled components (see codec/filter sources).
