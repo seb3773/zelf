@@ -26,7 +26,7 @@ fi
 # Create a release-friendly self-packed binary before packaging
 RELEASE_BIN="$BUILD_DIR/zelf_release"
 echo "Creating self-packed release binary: $RELEASE_BIN"
-if ! (cd "$ROOT_DIR" && "$BUILD_DIR/zelf" -shr "$BUILD_DIR/zelf" --output "$RELEASE_BIN" >/dev/null 2>&1); then
+if ! (cd "$ROOT_DIR" && "$BUILD_DIR/zelf" -lzma "$BUILD_DIR/zelf" --output "$RELEASE_BIN" >/dev/null 2>&1); then
   echo "Error: failed to create release binary with packer" >&2
   exit 1
 fi
