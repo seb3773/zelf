@@ -57,6 +57,11 @@
 static const unsigned char ELF_PARAMS_MAGIC[8] = {'+', 'z', 'E', 'L',
                                                   'F', '-', 'P', 'R'};
 
+ static const char *elfz_marker_suffixes[] = {
+     "l4", "ap", "zx", "z0", "bz", "ex", "pp", "sn", "dz", "qz", "lv",
+     "la", "sh", "sc", "ls", "zd", "de", "lz", "rn", "se", "cs", "nz",
+     NULL};
+
 typedef struct {
   uint64_t version;
   uint64_t virtual_start;
@@ -94,6 +99,49 @@ static int find_elfz_params(const unsigned char *data, size_t size,
   }
   return 0;
 }
+
+ static int find_payload_marker_offset(const unsigned char *data, size_t size,
+                                       size_t *payload_offset) {
+   if (!data || !payload_offset)
+     return 0;
+   if (size < 32)
+     return 0;
+
+   size_t best = (size_t)-1;
+   for (size_t i = 0; i + 26 <= size; i++) {
+     if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
+         data[i + 3] == 'F') {
+       for (int k = 0; elfz_marker_suffixes[k] != NULL; k++) {
+         if (data[i + 4] == (unsigned char)elfz_marker_suffixes[k][0] &&
+             data[i + 5] == (unsigned char)elfz_marker_suffixes[k][1]) {
+           const unsigned char *p = data + i + 6;
+           size_t orig_size = *(const size_t *)p;
+           p += 8;
+           uint64_t entry_offset = *(const uint64_t *)p;
+           p += 8;
+           int comp_size = *(const int *)p;
+           if (orig_size == 0)
+             continue;
+           if (orig_size > (size_t)(1024u * 1024u * 1024u))
+             continue;
+           if (entry_offset >= (uint64_t)orig_size)
+             continue;
+           if (comp_size <= 0)
+             continue;
+           size_t remaining = size - i;
+           if ((size_t)comp_size > remaining - 26)
+             continue;
+           best = i;
+         }
+       }
+     }
+   }
+
+   if (best == (size_t)-1)
+     return 0;
+   *payload_offset = best;
+   return 1;
+ }
 
 static int vaddr_to_offset(const unsigned char *data, size_t size,
                            uint64_t vaddr, size_t *offset_out) {
@@ -454,28 +502,7 @@ int elfz_depack(const char *input_path, const char *output_path) {
   if (params.packed_data_vaddr == 0) {
     // Dynamic binary (PIE) or missing params: address not patched/known.
     // Scan for marker.
-    int found_marker = 0;
-    // Known markers suffixes (after zELF)
-    const char *suffixes[] = {"l4", "ap", "zx", "z0", "bz", "ex", "pp",
-                              "sn", "dz", "qz", "lv", "la", "sh", "sc",
-                              "ls", "zd", "de", "lz", "rn", "se", "cs", "nz", NULL};
-
-    for (size_t i = 0; i < size - 6; i++) {
-      if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
-          data[i + 3] == 'F') {
-        // Check suffix
-        for (int k = 0; suffixes[k] != NULL; k++) {
-          if (data[i + 4] == suffixes[k][0] && data[i + 5] == suffixes[k][1]) {
-            payload_offset = i;
-            found_marker = 1;
-            break;
-          }
-        }
-        if (found_marker)
-          break;
-      }
-    }
-    if (!found_marker) {
+    if (!find_payload_marker_offset(data, size, &payload_offset)) {
       fprintf(stderr,
               "Error: Could not find compressed payload marker in file\n");
       munmap(data, size);
@@ -490,26 +517,7 @@ int elfz_depack(const char *input_path, const char *output_path) {
       // Fallback to marker scan.
       printf("[%s%s%s] VAddr mapping failed, falling back to marker scan\n",
              PK_INFO, PK_SYM_INFO, PK_RES);
-      int found_marker = 0;
-      const char *suffixes[] = {"l4", "ap", "zx", "z0", "bz", "ex", "pp",
-                                "sn", "dz", "qz", "lv", "la", "sh", "sc",
-                                "ls", "zd", "de", "lz", "rn", "se", "cs", "nz", NULL};
-      for (size_t i = 0; i < size - 6; i++) {
-        if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
-            data[i + 3] == 'F') {
-          for (int k = 0; suffixes[k] != NULL; k++) {
-            if (data[i + 4] == suffixes[k][0] &&
-                data[i + 5] == suffixes[k][1]) {
-              payload_offset = i;
-              found_marker = 1;
-              break;
-            }
-          }
-          if (found_marker)
-            break;
-        }
-      }
-      if (!found_marker) {
+      if (!find_payload_marker_offset(data, size, &payload_offset)) {
         fprintf(stderr, "Error: Could not map VAddr nor find marker in file\n");
         munmap(data, size);
         close(fd);
