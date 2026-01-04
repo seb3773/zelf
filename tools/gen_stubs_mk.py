@@ -287,7 +287,7 @@ def generate_makefile():
                     src_files = [d for d in deps if d.endswith('.c') or d.endswith('.S') or d.endswith('.s') or d.endswith('.o')]
                     src_files_str = " ".join(src_files)
                    
-                    print(f"\t@$(CC) -fuse-ld=gold {defines_str} -nostdlib -static -Os -flto -ffunction-sections -fdata-sections -fvisibility=hidden -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fno-builtin -fomit-frame-pointer -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1 -fmerge-all-constants -fno-ident {cflags} {includes_str} -o $@ {src_files_str} -Wl,-e,_start,-T,$(STUB_SRC)/stub.ld -Wl,-z,noexecstack -Wl,--build-id=none -Wl,--relax -Wl,--gc-sections -Wl,-O1,--strip-all {ldflags}")
+                    print(f"\t@$(CC) $(FUSE_LD_FLAG) {defines_str} -nostdlib -static -Os -flto -ffunction-sections -fdata-sections -fvisibility=hidden -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fno-builtin -fomit-frame-pointer -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1 -fmerge-all-constants -fno-ident {cflags} {includes_str} -o $@ {src_files_str} -Wl,-e,_start,-T,$(STUB_SRC)/stub.ld -Wl,-z,noexecstack -Wl,--build-id=none -Wl,--relax -Wl,--gc-sections -Wl,-O1,--strip-all {ldflags}")
                     print("")
                     # Rule for BIN
                     # Use a pattern rule or specific rule? Specific is safer to avoid conflicts
@@ -331,7 +331,7 @@ def generate_makefile():
         ]
         src_files_str = " ".join(src_files)
 
-        print(f"\t@$(CC) -fuse-ld=gold {defines_str} -nostdlib -static -Os -flto -ffunction-sections -fdata-sections -fvisibility=hidden -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fno-builtin -fomit-frame-pointer -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1 -fmerge-all-constants -fno-ident {cflags} {includes_str} -o $@ {src_files_str} -Wl,-e,_start,-T,$(STUB_SRC)/stub.ld -Wl,-z,noexecstack -Wl,--build-id=none -Wl,--relax -Wl,--gc-sections -Wl,-O1,--strip-all {ldflags}")
+        print(f"\t@$(CC) $(FUSE_LD_FLAG) {defines_str} -nostdlib -static -Os -flto -ffunction-sections -fdata-sections -fvisibility=hidden -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fno-builtin -fomit-frame-pointer -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1 -fmerge-all-constants -fno-ident {cflags} {includes_str} -o $@ {src_files_str} -Wl,-e,_start,-T,$(STUB_SRC)/stub.ld -Wl,-z,noexecstack -Wl,--build-id=none -Wl,--relax -Wl,--gc-sections -Wl,-O1,--strip-all {ldflags}")
         print("")
 
         print(f"{target_bin}: {target_elf} | $(BUILD_DIR)/stubs")
