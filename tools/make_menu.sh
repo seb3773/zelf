@@ -7,25 +7,64 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MAKE_CMD=${MAKE:-make}
 STATIC_MODE=0
+LINKER_MODE=auto
 
 run_make() {
   target="$1"
+  make_args=()
   if [ "$STATIC_MODE" -eq 1 ]; then
-    echo "==> Running: $MAKE_CMD STATIC=1 $target"
-    if $MAKE_CMD STATIC=1 $target; then
+    make_args+=(STATIC=1)
+  fi
+  if [ "$LINKER_MODE" != "auto" ]; then
+    make_args+=(FUSE_LD="$LINKER_MODE")
+  fi
+
+  if [ ${#make_args[@]} -ne 0 ]; then
+    echo "==> Running: $MAKE_CMD ${make_args[*]} $target"
+  else
+    echo "==> Running: $MAKE_CMD $target"
+  fi
+
+  if [ "$STATIC_MODE" -eq 1 ]; then
+    if $MAKE_CMD "${make_args[@]}" $target; then
       echo "==> Done: STATIC $target"
     else
       echo "==> Failed: STATIC $target" >&2
       read -p "Press Enter to continue..." _ || true
     fi
   else
-    echo "==> Running: $MAKE_CMD $target"
-    if $MAKE_CMD $target; then
+    if $MAKE_CMD "${make_args[@]}" $target; then
       echo "==> Done: $target"
     else
       echo "==> Failed: $target" >&2
       read -p "Press Enter to continue..." _ || true
     fi
+  fi
+}
+
+select_linker() {
+  if [ -n "${DIALOG:-}" ]; then
+    choice=$($DIALOG --clear --title "Linker selection" \
+      --menu "Select linker (FUSE_LD)" 18 80 10 \
+      1 "auto (gold -> bfd -> default)" \
+      2 "gold" \
+      3 "bfd" \
+      4 "lld" 3>&1 1>&2 2>&3) || return 0
+    case "$choice" in
+      1) LINKER_MODE=auto ;;
+      2) LINKER_MODE=gold ;;
+      3) LINKER_MODE=bfd ;;
+      4) LINKER_MODE=lld ;;
+    esac
+  else
+    case "$LINKER_MODE" in
+      auto) LINKER_MODE=bfd ;;
+      bfd) LINKER_MODE=lld ;;
+      lld) LINKER_MODE=gold ;;
+      gold) LINKER_MODE=auto ;;
+      *) LINKER_MODE=auto ;;
+    esac
+    echo "Linker now: $LINKER_MODE"
   fi
 }
 
@@ -64,7 +103,7 @@ if [ -n "$DIALOG" ]; then
     # Display current static/dynamic mode in the title
     MODE_STR="dynamic"
     [ "$STATIC_MODE" -eq 1 ] && MODE_STR="static"
-    CHOICES=$($DIALOG --clear --title "zELF Build Menu (mode: $MODE_STR)" \
+    CHOICES=$($DIALOG --clear --title "zELF Build Menu (mode: $MODE_STR, linker: $LINKER_MODE)" \
       --menu "Select an action" 24 100 16 \
       1 "Build everything (make all)" \
       2 "Build packer (make packer)" \
@@ -72,12 +111,13 @@ if [ -n "$DIALOG" ]; then
       4 "Build tools (make tools)" \
       5 "Clean (make clean)" \
       6 "Build type: $MODE_STR" \
-      7 "Create .deb package (make deb)" \
-      8 "Create tar.gz package (make tar)" \
-      9 "Install build deps (make install_dependencies)" \
-      10 "Quick tests (run test_all.sh)" \
-      11 "Show Makefile (open in pager)" \
-      12 "Exit" 3>&1 1>&2 2>&3)
+      7 "Linker: $LINKER_MODE" \
+      8 "Create .deb package (make deb)" \
+      9 "Create tar.gz package (make tar)" \
+      10 "Install build deps (make install_dependencies)" \
+      11 "Quick tests (run test_all.sh)" \
+      12 "Show Makefile (open in pager)" \
+      13 "Exit" 3>&1 1>&2 2>&3)
     rc=$?
     [ $rc -ne 0 ] && break
     case "$CHOICES" in
@@ -88,12 +128,13 @@ if [ -n "$DIALOG" ]; then
       5) run_make clean ;;
       6) # toggle
          STATIC_MODE=$((1 - STATIC_MODE)); SKIP_PAUSE=1 ;;
-      7) run_make deb ;;
-      8) run_make tar ;;
-      9) run_make install_dependencies ;;
-      10) run_quick_tests ;;
-      11) less "$ROOT_DIR/Makefile" ;;
-      12) break ;;
+      7) select_linker; SKIP_PAUSE=1 ;;
+      8) run_make deb ;;
+      9) run_make tar ;;
+      10) run_make install_dependencies ;;
+      11) run_quick_tests ;;
+      12) less "$ROOT_DIR/Makefile" ;;
+      13) break ;;
     esac
     if [ "${SKIP_PAUSE:-0}" -ne 1 ]; then
       echo
@@ -104,7 +145,7 @@ if [ -n "$DIALOG" ]; then
   done
 else
   PS3=$'Choose an action (type number): '
-  options=("make all" "make packer" "make stubs" "make tools" "make clean" "build type" "make deb (package)" "make tar (package tar.gz)" "install deps" "quick tests" "show Makefile" "exit")
+  options=("make all" "make packer" "make stubs" "make tools" "make clean" "build type" "linker" "make deb (package)" "make tar (package tar.gz)" "install deps" "quick tests" "show Makefile" "exit")
   while true; do
     echo
     echo "zELF Build Menu"
@@ -112,6 +153,7 @@ else
     # update option label to include current mode
     MODE_STR_TEXT=$( [ "$STATIC_MODE" -eq 1 ] && echo static || echo dynamic )
     options[5]="Build type: $MODE_STR_TEXT"
+    options[6]="Linker: $LINKER_MODE"
     select opt in "${options[@]}"; do
       case "$REPLY" in
         1) run_make all; break;;
@@ -120,12 +162,13 @@ else
         4) run_make tools; break;;
         5) run_make clean; break;;
   6) STATIC_MODE=$((1 - STATIC_MODE)); echo "Build type now: $( [ "$STATIC_MODE" -eq 1 ] && echo static || echo dynamic )"; break;;
-  7) run_make deb; break;;
-  8) run_make tar; break;;
-  9) run_make install_dependencies; break;;
-  10) run_quick_tests; break;;
-  11) less "$ROOT_DIR/Makefile"; break;;
-  12) echo "Bye"; exit 0;;
+  7) select_linker; break;;
+  8) run_make deb; break;;
+  9) run_make tar; break;;
+  10) run_make install_dependencies; break;;
+  11) run_quick_tests; break;;
+  12) less "$ROOT_DIR/Makefile"; break;;
+  13) echo "Bye"; exit 0;;
         *) echo "Invalid selection"; break;;
       esac
     done
