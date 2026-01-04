@@ -26,6 +26,19 @@ if command -v apt-get >/dev/null 2>&1; then
   fi
 
   echo "Done. If building static, ensure libc static is available on this system."
+elif command -v zypper >/dev/null 2>&1; then
+  echo "Detected openSUSE/SUSE (zypper). Installing build dependencies..."
+  echo "This may require sudo privileges."
+  sudo zypper -n refresh
+  sudo zypper -n install \
+    gcc gcc-c++ make nasm binutils pkg-config \
+    zlib-devel liblz4-devel libzstd-devel \
+    python3 python3-pip \
+    dialog ncurses-devel \
+    dpkg
+
+  sudo zypper -n install glibc-devel-static libstdc++-devel-static || true
+  echo "Done. If building static, you may need additional -static packages depending on the repo set."
 else
   echo "Non-Debian/Ubuntu system detected (no apt-get)."
   echo "Please install equivalent build deps manually:"
