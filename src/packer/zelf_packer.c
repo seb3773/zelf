@@ -162,7 +162,13 @@ static void print_version_full(void) {
           ZELF_BUILD_DATETIME, PK_RES);
   fprintf(out, "Built on %s\n", ZELF_BUILD_HOST_OS);
   fprintf(out, "Distro: %s\n", ZELF_BUILD_DISTRO);
+  fprintf(out, "GLIBC: %s\n", ZELF_BUILD_GLIBC);
   fprintf(out, "Linker: %s\n", ZELF_BUILD_LINKER);
+  fprintf(out, "LD ver: %s\n", ZELF_BUILD_LD_VERSION);
+  fprintf(out, "CC: %s\n", ZELF_BUILD_CC);
+  fprintf(out, "Objcopy: %s\n", ZELF_BUILD_OBJCOPY_VERSION);
+  fprintf(out, "NM: %s\n", ZELF_BUILD_NM_VERSION);
+  fprintf(out, "AS: %s\n", ZELF_BUILD_AS_VERSION);
   fprintf(out, "CPU: %s\n\n", ZELF_BUILD_HOST_CPU);
 }
 
