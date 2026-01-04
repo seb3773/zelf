@@ -70,6 +70,30 @@ typedef struct {
   uint64_t pwd_obfhash;
 } elfz_params_t;
 
+ static inline uint64_t load_u64(const void *p) {
+   uint64_t v;
+   memcpy(&v, p, sizeof(v));
+   return v;
+ }
+
+ static inline uint32_t load_u32(const void *p) {
+   uint32_t v;
+   memcpy(&v, p, sizeof(v));
+   return v;
+ }
+
+ static inline int32_t load_s32(const void *p) {
+   int32_t v;
+   memcpy(&v, p, sizeof(v));
+   return v;
+ }
+
+ static inline size_t load_size(const void *p) {
+   size_t v;
+   memcpy(&v, p, sizeof(v));
+   return v;
+ }
+
 static int find_elfz_params(const unsigned char *data, size_t size,
                             elfz_params_t *params) {
   // Search for magic
@@ -81,15 +105,15 @@ static int find_elfz_params(const unsigned char *data, size_t size,
   for (size_t i = 0; i + 48 <= size; i++) {
     if (memcmp(data + i, ELF_PARAMS_MAGIC, 8) == 0) {
       // Found magic
-      params->version = *(uint64_t *)(data + i + 8);
-      params->virtual_start = *(uint64_t *)(data + i + 16);
-      params->packed_data_vaddr = *(uint64_t *)(data + i + 24);
+      params->version = load_u64(data + i + 8);
+      params->virtual_start = load_u64(data + i + 16);
+      params->packed_data_vaddr = load_u64(data + i + 24);
 
       // Version check for v2 fields
       int ver = (int)(params->version & 0xFF);
       if (ver >= 2) {
-        params->salt = *(uint64_t *)(data + i + 32);
-        params->pwd_obfhash = *(uint64_t *)(data + i + 40);
+        params->salt = load_u64(data + i + 32);
+        params->pwd_obfhash = load_u64(data + i + 40);
       } else {
         params->salt = 0;
         params->pwd_obfhash = 0;
@@ -115,11 +139,11 @@ static int find_elfz_params(const unsigned char *data, size_t size,
          if (data[i + 4] == (unsigned char)elfz_marker_suffixes[k][0] &&
              data[i + 5] == (unsigned char)elfz_marker_suffixes[k][1]) {
            const unsigned char *p = data + i + 6;
-           size_t orig_size = *(const size_t *)p;
+           size_t orig_size = load_size(p);
            p += 8;
-           uint64_t entry_offset = *(const uint64_t *)p;
+           uint64_t entry_offset = load_u64(p);
            p += 8;
-           int comp_size = *(const int *)p;
+           int comp_size = (int)load_s32(p);
            if (orig_size == 0)
              continue;
            if (orig_size > (size_t)(1024u * 1024u * 1024u))
@@ -347,9 +371,9 @@ static int analyze_stage0_stub(const unsigned char *data, size_t size,
     return 0;
   }
 
-  uint32_t ulen = *(uint32_t *)(stub + STAGE0_HDR_ULEN_OFF);
-  uint32_t clen = *(uint32_t *)(stub + STAGE0_HDR_CLEN_OFF);
-  uint64_t blob_off = *(uint64_t *)(stub + STAGE0_HDR_BLOB_OFF);
+  uint32_t ulen = load_u32(stub + STAGE0_HDR_ULEN_OFF);
+  uint32_t clen = load_u32(stub + STAGE0_HDR_CLEN_OFF);
+  uint64_t blob_off = load_u64(stub + STAGE0_HDR_BLOB_OFF);
 
   printf("[%s%s%s] Stage0 Header: ulen=%u, clen=%u, blob_off=0x%lx\n", PK_INFO,
          PK_SYM_INFO, PK_RES, ulen, clen, blob_off);
@@ -551,11 +575,11 @@ int elfz_depack(const char *input_path, const char *output_path) {
   marker[6] = '\0';
   const unsigned char *p = payload + 6;
 
-  size_t orig_size = *(size_t *)p;
+  size_t orig_size = load_size(p);
   p += 8;
-  uint64_t entry_offset = *(uint64_t *)p;
+  uint64_t entry_offset = load_u64(p);
   p += 8;
-  int comp_size = *(int *)p;
+  int comp_size = (int)load_s32(p);
   p += 4;
 
   int is_bcj_flag = (params.version >> 8) & 1;
@@ -603,7 +627,7 @@ int elfz_depack(const char *input_path, const char *output_path) {
     if ((size_t)(p - payload) + 4 <= remaining) {
       const unsigned char *m = (const unsigned char *)p;
       if (!(m[0] == 0x28 && m[1] == 0xB5 && m[2] == 0x2F && m[3] == 0xFD)) {
-        is_bcj_flag = *(int *)p;
+        is_bcj_flag = (int)load_s32(p);
         p += 4;
       } else {
         // Old zstd legacy layout: BCJ must be inferred from params/heuristics
@@ -694,7 +718,7 @@ int elfz_depack(const char *input_path, const char *output_path) {
       close(fd);
       return 1;
     }
-    filtered_size = (size_t)*(int *)p;
+    filtered_size = (size_t)(unsigned)load_u32(p);
     p += 4;
     printf("[%s%s%s] Filtered Size (Header): %zu\n", PK_INFO, PK_SYM_INFO,
            PK_RES, filtered_size);
