@@ -37,7 +37,15 @@ elif command -v zypper >/dev/null 2>&1; then
     dialog ncurses-devel \
     dpkg
 
-  sudo zypper -n install glibc-devel-static libstdc++-devel-static || true
+  if sudo zypper -n info glibc-devel-static >/dev/null 2>&1; then
+    sudo zypper -n install glibc-devel-static || true
+  fi
+  if sudo zypper -n info libstdc++-devel-static >/dev/null 2>&1; then
+    sudo zypper -n install libstdc++-devel-static || true
+  fi
+  if sudo zypper -n info lld >/dev/null 2>&1; then
+    sudo zypper -n install lld || true
+  fi
   echo "Done. If building static, you may need additional -static packages depending on the repo set."
 else
   echo "Non-Debian/Ubuntu system detected (no apt-get)."
