@@ -94,6 +94,51 @@ typedef struct {
    return v;
  }
 
+static int elf_pt_load_end_offset(const unsigned char *data, size_t size,
+                                  size_t *out_end_off) {
+   if (!out_end_off)
+     return 0;
+   *out_end_off = 0;
+   if (!data || size < sizeof(Elf64_Ehdr))
+     return 0;
+
+   const Elf64_Ehdr *eh = (const Elf64_Ehdr *)data;
+   if (eh->e_ident[EI_MAG0] != ELFMAG0 || eh->e_ident[EI_MAG1] != ELFMAG1 ||
+       eh->e_ident[EI_MAG2] != ELFMAG2 || eh->e_ident[EI_MAG3] != ELFMAG3)
+     return 0;
+   if (eh->e_ident[EI_CLASS] != ELFCLASS64)
+     return 0;
+   if (eh->e_phentsize != sizeof(Elf64_Phdr))
+     return 0;
+
+   if (eh->e_phoff == 0 || eh->e_phnum == 0)
+     return 0;
+   if ((size_t)eh->e_phoff > size)
+     return 0;
+   size_t phdrs_size = (size_t)eh->e_phnum * sizeof(Elf64_Phdr);
+   if ((size_t)eh->e_phoff + phdrs_size > size)
+     return 0;
+
+   const Elf64_Phdr *ph = (const Elf64_Phdr *)(data + eh->e_phoff);
+   size_t end_off = 0;
+   for (uint16_t i = 0; i < eh->e_phnum; i++) {
+     if (ph[i].p_type != PT_LOAD)
+       continue;
+     if ((size_t)ph[i].p_offset > size)
+       continue;
+     size_t seg_end = (size_t)ph[i].p_offset + (size_t)ph[i].p_filesz;
+     if (seg_end > size)
+       continue;
+     if (seg_end > end_off)
+       end_off = seg_end;
+   }
+
+   if (end_off == 0 || end_off >= size)
+     return 0;
+   *out_end_off = end_off;
+   return 1;
+ }
+
 static int find_elfz_params(const unsigned char *data, size_t size,
                             elfz_params_t *params) {
   // Search for magic
@@ -102,6 +147,30 @@ static int find_elfz_params(const unsigned char *data, size_t size,
   // Given we map the whole file, scanning it all is fine for typical binaries.
   // Optimization: stub is usually at the beginning.
 
+  size_t pt_load_end_off = 0;
+  if (elf_pt_load_end_offset(data, size, &pt_load_end_off)) {
+    for (size_t i = pt_load_end_off; i + 48 <= size; i++) {
+      if (memcmp(data + i, ELF_PARAMS_MAGIC, 8) == 0) {
+        // Found magic
+        params->version = load_u64(data + i + 8);
+        params->virtual_start = load_u64(data + i + 16);
+        params->packed_data_vaddr = load_u64(data + i + 24);
+
+        // Version check for v2 fields
+        int ver = (int)(params->version & 0xFF);
+        if (ver >= 2) {
+          params->salt = load_u64(data + i + 32);
+          params->pwd_obfhash = load_u64(data + i + 40);
+        } else {
+          params->salt = 0;
+          params->pwd_obfhash = 0;
+        }
+        return 1;
+      }
+    }
+  }
+
+  // Fallback to whole-file scan
   for (size_t i = 0; i + 48 <= size; i++) {
     if (memcmp(data + i, ELF_PARAMS_MAGIC, 8) == 0) {
       // Found magic
@@ -124,48 +193,123 @@ static int find_elfz_params(const unsigned char *data, size_t size,
   return 0;
 }
 
- static int find_payload_marker_offset(const unsigned char *data, size_t size,
-                                       size_t *payload_offset) {
-   if (!data || !payload_offset)
-     return 0;
-   if (size < 32)
-     return 0;
+ static int find_payload_marker_offset_from_first(const unsigned char *data,
+                                                  size_t size, size_t start,
+                                                  size_t *payload_offset);
 
-   size_t best = (size_t)-1;
-   for (size_t i = 0; i + 26 <= size; i++) {
-     if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
-         data[i + 3] == 'F') {
-       for (int k = 0; elfz_marker_suffixes[k] != NULL; k++) {
-         if (data[i + 4] == (unsigned char)elfz_marker_suffixes[k][0] &&
-             data[i + 5] == (unsigned char)elfz_marker_suffixes[k][1]) {
-           const unsigned char *p = data + i + 6;
-           size_t orig_size = load_size(p);
-           p += 8;
-           uint64_t entry_offset = load_u64(p);
-           p += 8;
-           int comp_size = (int)load_s32(p);
-           if (orig_size == 0)
-             continue;
-           if (orig_size > (size_t)(1024u * 1024u * 1024u))
-             continue;
-           if (entry_offset >= (uint64_t)orig_size)
-             continue;
-           if (comp_size <= 0)
-             continue;
-           size_t remaining = size - i;
-           if ((size_t)comp_size > remaining - 26)
-             continue;
-           best = i;
-         }
-       }
-     }
-   }
+ static int find_payload_marker_offset_from_last(const unsigned char *data,
+                                                 size_t size, size_t start,
+                                                 size_t *payload_offset);
 
-   if (best == (size_t)-1)
-     return 0;
-   *payload_offset = best;
-   return 1;
- }
+static int find_payload_marker_offset(const unsigned char *data, size_t size,
+                                      size_t *payload_offset) {
+  if (!data || !payload_offset)
+    return 0;
+  if (size < 32)
+    return 0;
+
+  size_t pt_load_end_off = 0;
+  if (elf_pt_load_end_offset(data, size, &pt_load_end_off)) {
+    if (find_payload_marker_offset_from_first(data, size, pt_load_end_off,
+                                              payload_offset))
+      return 1;
+    return find_payload_marker_offset_from_last(data, size, 0, payload_offset);
+  }
+
+  // Fallback to whole-file scan
+  return find_payload_marker_offset_from_last(data, size, 0, payload_offset);
+}
+
+static int find_payload_marker_offset_from_first(const unsigned char *data,
+                                                 size_t size, size_t start,
+                                                 size_t *payload_offset) {
+  if (!data || !payload_offset)
+    return 0;
+  if (size < 32)
+    return 0;
+  if (start >= size)
+    return 0;
+
+  for (size_t i = start; i + 26 <= size; i++) {
+    if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
+        data[i + 3] == 'F') {
+      for (int k = 0; elfz_marker_suffixes[k] != NULL; k++) {
+        if (data[i + 4] == (unsigned char)elfz_marker_suffixes[k][0] &&
+            data[i + 5] == (unsigned char)elfz_marker_suffixes[k][1]) {
+          const unsigned char *p = data + i + 6;
+          size_t orig_size = load_size(p);
+          p += 8;
+          uint64_t entry_offset = load_u64(p);
+          p += 8;
+          int comp_size = (int)load_s32(p);
+
+          if (orig_size == 0)
+            continue;
+          if (orig_size > (size_t)(1024u * 1024u * 1024u))
+            continue;
+          if (entry_offset >= (uint64_t)orig_size)
+            continue;
+          if (comp_size <= 0)
+            continue;
+          size_t remaining = size - i;
+          if ((size_t)comp_size > remaining - 26)
+            continue;
+
+          *payload_offset = i;
+          return 1;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+static int find_payload_marker_offset_from_last(const unsigned char *data,
+                                                size_t size, size_t start,
+                                                size_t *payload_offset) {
+  if (!data || !payload_offset)
+    return 0;
+  if (size < 32)
+    return 0;
+  if (start >= size)
+    return 0;
+
+  size_t best = (size_t)-1;
+  for (size_t i = start; i + 26 <= size; i++) {
+    if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
+        data[i + 3] == 'F') {
+      for (int k = 0; elfz_marker_suffixes[k] != NULL; k++) {
+        if (data[i + 4] == (unsigned char)elfz_marker_suffixes[k][0] &&
+            data[i + 5] == (unsigned char)elfz_marker_suffixes[k][1]) {
+          const unsigned char *p = data + i + 6;
+          size_t orig_size = load_size(p);
+          p += 8;
+          uint64_t entry_offset = load_u64(p);
+          p += 8;
+          int comp_size = (int)load_s32(p);
+
+          if (orig_size == 0)
+            continue;
+          if (orig_size > (size_t)(1024u * 1024u * 1024u))
+            continue;
+          if (entry_offset >= (uint64_t)orig_size)
+            continue;
+          if (comp_size <= 0)
+            continue;
+          size_t remaining = size - i;
+          if ((size_t)comp_size > remaining - 26)
+            continue;
+
+          best = i;
+        }
+      }
+    }
+  }
+  if (best == (size_t)-1)
+    return 0;
+  *payload_offset = best;
+  return 1;
+}
 
 static int vaddr_to_offset(const unsigned char *data, size_t size,
                            uint64_t vaddr, size_t *offset_out) {
