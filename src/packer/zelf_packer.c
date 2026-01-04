@@ -2498,7 +2498,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Print mode-specific message (not archive/unpack/best)
-  if (!mode_archive && !mode_unpack && !mode_best) {
+  if (!mode_archive && !mode_unpack && !mode_best && !mode_archive_list) {
     FILE *out = g_ui_stream ? g_ui_stream : stdout;
     fprintf(out, "[%s%s%s] Packing ELF: %s\n", PK_ARROW, PK_SYM_ARROW, PK_RES,
             input_path);

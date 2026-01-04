@@ -251,25 +251,26 @@ static int db_append(struct dynbuf *b, const void *data, size_t n) {
 static void tar_octal(char *dst, size_t dst_len, uint64_t v) {
   if (dst_len == 0)
     return;
-  memset(dst, 0, dst_len);
   if (dst_len == 1) {
     dst[0] = '\0';
     return;
   }
-  size_t pos = dst_len - 2;
+
+  memset(dst, '0', dst_len);
   dst[dst_len - 1] = '\0';
+
+  size_t pos = dst_len - 2;
   for (;;) {
     dst[pos] = (char)('0' + (v & 7u));
     v >>= 3;
     if (pos == 0)
       break;
-    --pos;
-    if (v == 0)
+    if (v == 0) {
+      while (pos > 0)
+        dst[--pos] = '0';
       break;
-  }
-  while (pos > 0) {
+    }
     --pos;
-    dst[pos] = '0';
   }
 }
 

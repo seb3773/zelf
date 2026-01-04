@@ -3,6 +3,7 @@
 #include <elf.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -376,6 +377,10 @@ static int analyze_stage0_stub(const unsigned char *data, size_t size,
 }
 
 static int write_file(const char *path, const void *data, size_t size) {
+  if (!path || !*path) {
+    errno = EINVAL;
+    return -1;
+  }
   FILE *f = fopen(path, "wb");
   if (!f)
     return -1;
@@ -388,6 +393,24 @@ static int write_file(const char *path, const void *data, size_t size) {
 }
 
 int elfz_depack(const char *input_path, const char *output_path) {
+  char default_out[4096];
+  if (!output_path || !*output_path) {
+    if (input_path && *input_path && strcmp(input_path, "-") != 0) {
+      size_t n = strlen(input_path);
+      if (n + 9 < sizeof(default_out)) {
+        memcpy(default_out, input_path, n);
+        memcpy(default_out + n, ".unpacked", 10);
+        output_path = default_out;
+      } else {
+        memcpy(default_out, "unpacked.elf", 13);
+        output_path = default_out;
+      }
+    } else {
+      memcpy(default_out, "unpacked.elf", 13);
+      output_path = default_out;
+    }
+  }
+
   int fd = open(input_path, O_RDONLY);
   if (fd < 0) {
     perror("open input");
@@ -901,7 +924,8 @@ int elfz_depack(const char *input_path, const char *output_path) {
 
   // 6. Write Output
   if (write_file(output_path, final_buf, final_size) != 0) {
-    fprintf(stderr, "Error: Failed to write output file\n");
+    fprintf(stderr, "Error: Failed to write output file: %s\n",
+            strerror(errno));
     if (free_final && final_buf)
       free(final_buf);
     else if (decomp_buf)
