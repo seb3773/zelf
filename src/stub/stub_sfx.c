@@ -136,6 +136,12 @@ static int write_all(int fd, const void *buf, size_t n) {
   return 0;
 }
 
+static void write_cstr(int fd, const char *s) {
+  if (!s)
+    return;
+  (void)write_all(fd, s, (size_t)simple_strlen(s));
+}
+
 static int ensure_dir_exists_p(const char *path);
 
 static int ensure_parent_dir_exists_p(const char *path) {
@@ -663,6 +669,7 @@ long elfz_sfx_entry(void) {
     is_tar = 1;
 
   if (is_tar) {
+    write_cstr(STDOUT_FILENO, "\nExtracting...\n");
     if (ensure_dir_exists_p(root) != 0) {
       (void)z_syscall_munmap(outbuf, out_map_sz);
       (void)z_syscall_munmap(map0, map_sz);
@@ -673,6 +680,11 @@ long elfz_sfx_entry(void) {
     int rc = extract_tar_to_dir((const uint8_t *)outbuf, (size_t)orig_size, root,
                                &overwrite_policy);
     (void)rc;
+    if (rc == 0) {
+      write_cstr(STDOUT_FILENO, "Archive extracted to ");
+      write_cstr(STDOUT_FILENO, root);
+      write_cstr(STDOUT_FILENO, "\n");
+    }
     (void)z_syscall_munmap(outbuf, out_map_sz);
     (void)z_syscall_munmap(map0, map_sz);
     (void)z_syscall_close((int)fd);
@@ -686,8 +698,14 @@ long elfz_sfx_entry(void) {
     return 1;
   }
 
+  write_cstr(STDOUT_FILENO, "\nExtracting...\n");
   int rc = do_extract_single((const uint8_t *)outbuf, (size_t)orig_size, root,
                              &overwrite_policy);
+  if (rc == 0) {
+    write_cstr(STDOUT_FILENO, "Archive extracted to ");
+    write_cstr(STDOUT_FILENO, root);
+    write_cstr(STDOUT_FILENO, "\n");
+  }
   (void)z_syscall_munmap(outbuf, out_map_sz);
   (void)z_syscall_munmap(map0, map_sz);
   (void)z_syscall_close((int)fd);

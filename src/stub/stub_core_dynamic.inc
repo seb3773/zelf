@@ -908,10 +908,13 @@ static void stub_main_common(unsigned long *original_sp, uint64_t saved_rdx_kern
     // Pas de copie, juste modification des valeurs AUXV existantes
 
     // Update AT_PHDR, AT_PHNUM, AT_PHENT, AT_ENTRY directly in auxv
+    uint64_t at_phdr = (uint64_t)coherent_base + ((Elf64_Ehdr *)coherent_base)->e_phoff;
+    uint64_t at_entry = entry_point;
     int j = 0;
     while (auxv[j * 2] != 0) {  // Walk until AT_NULL
         unsigned long tag = auxv[j * 2];
         if (tag == AT_PHDR) {
+            auxv[j * 2 + 1] = at_phdr;
         }
         else if (tag == AT_PHNUM) {
             auxv[j * 2 + 1] = ((Elf64_Ehdr *)coherent_base)->e_phnum;
@@ -920,6 +923,7 @@ static void stub_main_common(unsigned long *original_sp, uint64_t saved_rdx_kern
             auxv[j * 2 + 1] = ((Elf64_Ehdr *)coherent_base)->e_phentsize;
         }
         else if (tag == AT_ENTRY) {
+            auxv[j * 2 + 1] = at_entry;
         } else if (tag == AT_BASE) {
             auxv[j * 2 + 1] = 0;
         }
