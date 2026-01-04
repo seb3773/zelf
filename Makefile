@@ -51,9 +51,38 @@ ifeq ($(STATIC),1)
  TOOLS_LDFLAGS += -static -static-libgcc -static-libstdc++
 endif
 
+# Stub PIE policy:
+# Some toolchains (observed with GCC 15+) may emit absolute-addressing sequences
+# in stub code when not compiling as PIE. Since stubs are embedded as raw binary
+# blobs (objcopy -O binary), relocations are not available at runtime and this
+# can crash (SIGSEGV) when mapped at a randomized base.
+#
+# Override:
+#   make STUB_FORCE_PIE=0   -> force disabled
+#   make STUB_FORCE_PIE=1   -> force enabled
+STUB_FORCE_PIE ?= auto
+GCC_MAJOR := $(shell $(CC) -dumpversion 2>/dev/null | sed 's/\..*//' )
+
+ifeq ($(STUB_FORCE_PIE),1)
+ STUB_PIE_CFLAGS := -fpie
+else ifeq ($(STUB_FORCE_PIE),0)
+ STUB_PIE_CFLAGS :=
+else
+ # auto
+ ifneq ($(GCC_MAJOR),)
+  ifneq ($(shell [ $(GCC_MAJOR) -ge 15 ] 2>/dev/null && echo 1),)
+   STUB_PIE_CFLAGS := -fpie
+  else
+   STUB_PIE_CFLAGS :=
+  endif
+ else
+  STUB_PIE_CFLAGS :=
+ endif
+endif
+
 # Flags prod taille (stubs)
 # Ensure 16-byte stack alignment for SSE (movaps) even if caller misaligned
-STUB_PROD_CFLAGS = -fpie -fstrict-aliasing -march=x86-64 -mstackrealign -fno-plt -fno-math-errno -ffast-math -I $(SRC_DIR)/filters -I $(SRC_DIR)/decompressors/lzav -I $(SRC_DIR)/decompressors/zx7b -I $(SRC_DIR)/decompressors/snappy -I $(SRC_DIR)/decompressors/quicklz -I $(SRC_DIR)/decompressors/exo -I $(SRC_DIR)/decompressors/doboz -I $(SRC_DIR)/decompressors/pp -I $(SRC_DIR)/decompressors/lzma -I $(SRC_DIR)/decompressors/zstd -I $(SRC_DIR)/decompressors/zstd/third_party/muzscat -I $(SRC_DIR)/decompressors/apultra -I $(SRC_DIR)/decompressors/lz4 -I $(SRC_DIR)/decompressors/shrinkler -I $(SRC_DIR)/decompressors/zx0 -I $(SRC_DIR)/decompressors/brieflz -I $(SRC_DIR)/compressors/brieflz -DBLZ_NO_LUT -I $(SRC_DIR)/decompressors/stonecracker -I $(SRC_DIR)/decompressors/lzsa/libs/decompression -I $(SRC_DIR)/decompressors/density -I $(SRC_DIR)/decompressors/lzham -I $(SRC_DIR)/decompressors/rnc
+STUB_PROD_CFLAGS = $(STUB_PIE_CFLAGS) -fstrict-aliasing -march=x86-64 -mstackrealign -fno-plt -fno-math-errno -ffast-math -I $(SRC_DIR)/filters -I $(SRC_DIR)/decompressors/lzav -I $(SRC_DIR)/decompressors/zx7b -I $(SRC_DIR)/decompressors/snappy -I $(SRC_DIR)/decompressors/quicklz -I $(SRC_DIR)/decompressors/exo -I $(SRC_DIR)/decompressors/doboz -I $(SRC_DIR)/decompressors/pp -I $(SRC_DIR)/decompressors/lzma -I $(SRC_DIR)/decompressors/zstd -I $(SRC_DIR)/decompressors/zstd/third_party/muzscat -I $(SRC_DIR)/decompressors/apultra -I $(SRC_DIR)/decompressors/lz4 -I $(SRC_DIR)/decompressors/shrinkler -I $(SRC_DIR)/decompressors/zx0 -I $(SRC_DIR)/decompressors/brieflz -I $(SRC_DIR)/compressors/brieflz -DBLZ_NO_LUT -I $(SRC_DIR)/decompressors/stonecracker -I $(SRC_DIR)/decompressors/lzsa/libs/decompression -I $(SRC_DIR)/decompressors/density -I $(SRC_DIR)/decompressors/lzham -I $(SRC_DIR)/decompressors/rnc
 STUB_PROD_LDFLAGS = -Wl,--as-needed $(ICF_LDFLAG) -Wl,--gc-sections -Wl,--relax -Wl,--build-id=none -Wl,-O1,--strip-all
 
 # Répertoires
@@ -342,6 +371,10 @@ endif
 .PHONY: all static packer
 all: stubs tools packer
 	@printf "\033[37;43m✔ Compilation terminée\033[0m\n"
+	@if [ -n "$(STUB_PIE_CFLAGS)" ]; then \
+	  printf "\033[37;43m! WARNING: Stub builds are not size-optimal (STUB_PIE_CFLAGS enabled: %s).\033[0m\n" "$(STUB_PIE_CFLAGS)"; \
+	  printf "\033[37;43m! Reason: this toolchain may emit absolute-addressing in stubs when not built as PIE; raw embedded stubs have no relocations and may crash at runtime.\033[0m\n"; \
+	fi
 
 # Convenience alias to build static packer/tools/zelf
 static:
