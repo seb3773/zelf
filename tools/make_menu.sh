@@ -46,22 +46,19 @@ select_linker() {
   if [ -n "${DIALOG:-}" ]; then
     choice=$($DIALOG --clear --title "Linker selection" \
       --menu "Select linker (FUSE_LD)" 18 80 10 \
-      1 "auto (gold -> bfd -> default)" \
-      2 "gold" \
-      3 "bfd" \
-      4 "lld" 3>&1 1>&2 2>&3) || return 0
+      1 "auto (lld -> bfd -> default)" \
+      2 "lld" \
+      3 "bfd" 3>&1 1>&2 2>&3) || return 0
     case "$choice" in
       1) LINKER_MODE=auto ;;
-      2) LINKER_MODE=gold ;;
+      2) LINKER_MODE=lld ;;
       3) LINKER_MODE=bfd ;;
-      4) LINKER_MODE=lld ;;
     esac
   else
     case "$LINKER_MODE" in
-      auto) LINKER_MODE=bfd ;;
-      bfd) LINKER_MODE=lld ;;
-      lld) LINKER_MODE=gold ;;
-      gold) LINKER_MODE=auto ;;
+      auto) LINKER_MODE=lld ;;
+      lld) LINKER_MODE=bfd ;;
+      bfd) LINKER_MODE=auto ;;
       *) LINKER_MODE=auto ;;
     esac
     echo "Linker now: $LINKER_MODE"
