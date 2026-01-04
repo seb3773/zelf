@@ -8,6 +8,16 @@ CXX = g++
 LD = ld
 NASM = nasm
 
+FUSE_LD ?=
+ifeq ($(strip $(FUSE_LD)),)
+FUSE_LD := $(shell if command -v ld.gold >/dev/null 2>&1; then echo gold; elif command -v ld.lld >/dev/null 2>&1; then echo lld; else echo bfd; fi)
+endif
+ifeq ($(FUSE_LD),none)
+FUSE_LD_FLAG =
+else
+FUSE_LD_FLAG = -fuse-ld=$(FUSE_LD)
+endif
+
 # Static build toggle (usage: make STATIC=1)
 STATIC ?= 0
 
@@ -287,7 +297,7 @@ ifeq ($(DEBUG),1)
 else
  STUB_CFLAGS = -c -O2 -nostdlib -fno-stack-protector -fno-asynchronous-unwind-tables -fno-unwind-tables -ffunction-sections -fdata-sections -fomit-frame-pointer -fno-builtin
  # Aggressive size optimization for packer binary
-PACKER_CFLAGS = -Os -flto=9 -fuse-ld=gold -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fomit-frame-pointer -ffunction-sections -fdata-sections -fvisibility=hidden -fno-plt -fmerge-all-constants -fno-ident -fno-exceptions \
+PACKER_CFLAGS = -Os -flto=9 $(FUSE_LD_FLAG) -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fomit-frame-pointer -ffunction-sections -fdata-sections -fvisibility=hidden -fno-plt -fmerge-all-constants -fno-ident -fno-exceptions \
  	-D_7ZIP_ST -DQLZ_COMPRESSION_LEVEL=3 -DQLZ_STREAMING_BUFFER=0 \
  	-I $(SRC_DIR)/compressors/apultra -I $(SRC_DIR)/compressors/apultra/libdivsufsort/include -I $(SRC_DIR)/compressors/lzma/C -I $(SRC_DIR)/compressors/zstd/lib -I $(SRC_DIR)/compressors/zstd/lib/common -I $(SRC_DIR)/compressors/lz4 -I $(SRC_DIR)/compressors/qlz -I $(SRC_DIR)/compressors/pp -I $(SRC_DIR)/compressors/lzav -I $(SRC_DIR)/compressors/snappy -I $(SRC_DIR)/compressors/zx7b -I $(SRC_DIR)/compressors/zx0 -I $(SRC_DIR)/compressors/doboz -I $(SRC_DIR)/compressors/exo -I $(SRC_DIR)/compressors/shrinkler -I $(SRC_DIR)/compressors/shrinkler/ref -I $(SRC_DIR)/compressors/brieflz -DBLZ_NO_LUT -I $(SRC_DIR)/compressors/stonecracker -I $(SRC_DIR)/compressors/lzsa/libs/compression -I $(SRC_DIR)/compressors/lzsa/compressor -I $(SRC_DIR)/compressors/lzsa/compressor/libdivsufsort/include -I $(SRC_DIR)/compressors/density -I $(SRC_DIR)/decompressors/density -I $(SRC_DIR)/others -I $(SRC_DIR)/filters -I $(SRC_DIR)/compressors/lzham -I $(SRC_DIR)/compressors/lzham/vendor/lzhamcomp -I $(SRC_DIR)/compressors/lzham/vendor/lzhamdecomp \
 	-I $(SRC_DIR)/compressors/rnc -I $(SRC_DIR)/decompressors/zstd -I $(SRC_DIR)/tools/ucl/vendor/include -I $(SRC_DIR)/tools/ucl/vendor/src
