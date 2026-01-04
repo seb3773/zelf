@@ -10,11 +10,9 @@ NASM = nasm
 
 FUSE_LD ?=
 ifeq ($(strip $(FUSE_LD)),)
- FUSE_LD := $(shell if command -v ld.gold >/dev/null 2>&1; then echo gold; elif command -v ld.bfd >/dev/null 2>&1; then echo bfd; else echo default; fi)
+ FUSE_LD := $(shell if command -v ld.lld >/dev/null 2>&1; then echo lld; elif command -v ld.bfd >/dev/null 2>&1; then echo bfd; else echo default; fi)
 endif
-ifeq ($(FUSE_LD),gold)
- FUSE_LD_FLAG = -fuse-ld=gold
-else ifeq ($(FUSE_LD),bfd)
+ifeq ($(FUSE_LD),bfd)
  FUSE_LD_FLAG = -fuse-ld=bfd
 else ifeq ($(FUSE_LD),lld)
  FUSE_LD_FLAG = -fuse-ld=lld
@@ -30,9 +28,7 @@ else
  PACKER_LTO_FLAG = -flto=9
 endif
 
-ifeq ($(FUSE_LD),gold)
- ICF_LDFLAG = -Wl,--icf=all
-else ifeq ($(FUSE_LD),lld)
+ifeq ($(FUSE_LD),lld)
  ICF_LDFLAG = -Wl,--icf=all
 else
  ICF_LDFLAG =
@@ -469,6 +465,9 @@ $(BUILD_INFO_H): | $(BUILD_DIR)
 	     opensuse*|suse|sles) distro=opensuse ;; \
 	   esac; \
 	 fi; \
+	 glibc=$$(getconf GNU_LIBC_VERSION 2>/dev/null || true); \
+	 if [ -z "$$glibc" ]; then glibc=$$(ldd --version 2>/dev/null | head -n1 | sed 's/[[:space:]]\+/ /g' || true); fi; \
+	 if [ -z "$$glibc" ]; then glibc=unknown; fi; \
 	 os=$$(uname -sr 2>/dev/null || echo unknown); \
 	 cpu=$$(uname -m 2>/dev/null || echo unknown); \
 	 model=$$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2- | sed 's/^ *//'); \
@@ -477,19 +476,34 @@ $(BUILD_INFO_H): | $(BUILD_DIR)
 	 lsel="$(FUSE_LD)"; \
 	 if [ -z "$$lsel" ] || [ "$$lsel" = "default" ]; then lsel=default; fi; \
 	 case "$$lsel" in \
-	   gold) linker="ld.gold" ;; \
 	   bfd) linker="ld.bfd" ;; \
 	   lld) linker="ld.lld" ;; \
 	   *) linker="ld" ;; \
 	 esac; \
+	 gcc_v=$$( $(CC) --version 2>/dev/null | head -n1 | sed 's/[[:space:]]\+/ /g' || true ); \
+	 if [ -z "$$gcc_v" ]; then gcc_v=unknown; fi; \
+	 ld_v=$$( $$linker --version 2>/dev/null | head -n1 | sed 's/[[:space:]]\+/ /g' || true ); \
+	 if [ -z "$$ld_v" ]; then ld_v=unknown; fi; \
+	 objcopy_v=$$( objcopy --version 2>/dev/null | head -n1 | sed 's/[[:space:]]\+/ /g' || true ); \
+	 if [ -z "$$objcopy_v" ]; then objcopy_v=unknown; fi; \
+	 nm_v=$$( nm --version 2>/dev/null | head -n1 | sed 's/[[:space:]]\+/ /g' || true ); \
+	 if [ -z "$$nm_v" ]; then nm_v=unknown; fi; \
+	 as_v=$$( as --version 2>/dev/null | head -n1 | sed 's/[[:space:]]\+/ /g' || true ); \
+	 if [ -z "$$as_v" ]; then as_v=unknown; fi; \
 	 { \
 		echo '#ifndef ZELF_BUILD_INFO_H'; \
 		echo '#define ZELF_BUILD_INFO_H'; \
 		echo '#define ZELF_BUILD_DATETIME "'"$$dt"'"'; \
 		echo '#define ZELF_BUILD_DISTRO "'"$$distro"'"'; \
+		echo '#define ZELF_BUILD_GLIBC "'"$$glibc"'"'; \
 		echo '#define ZELF_BUILD_HOST_OS "'"$$os"'"'; \
 		echo '#define ZELF_BUILD_HOST_CPU "'"$$cpu"'"'; \
 		echo '#define ZELF_BUILD_LINKER "'"$$linker"'"'; \
+		echo '#define ZELF_BUILD_CC "'"$$gcc_v"'"'; \
+		echo '#define ZELF_BUILD_LD_VERSION "'"$$ld_v"'"'; \
+		echo '#define ZELF_BUILD_OBJCOPY_VERSION "'"$$objcopy_v"'"'; \
+		echo '#define ZELF_BUILD_NM_VERSION "'"$$nm_v"'"'; \
+		echo '#define ZELF_BUILD_AS_VERSION "'"$$as_v"'"'; \
 		echo '#define ZELF_BUILD_LINKAGE "'"$$link"'"'; \
 		echo '#endif'; \
 	 } > $@.tmp; \
@@ -539,11 +553,10 @@ help:
 	@printf "\n"
 	@printf "Build options:\n"
 	@printf "  STATIC=1                Build static packer (stubs are separate)\n"
-	@printf "  FUSE_LD=auto|gold|bfd|lld  Select linker for GCC (default: auto)\n"
+	@printf "  FUSE_LD=auto|bfd|lld     Select linker for GCC (default: auto)\n"
 	@printf "\n"
 	@printf "Linker notes:\n"
-	@printf "  auto  : prefers ld.gold if present, else ld.bfd if present, else system default ld\n"
-	@printf "  gold  : enables ICF and keeps stub LTO enabled (smallest stubs)\n"
+	@printf "  auto  : prefers ld.lld if present, else ld.bfd if present, else system default ld\n"
 	@printf "  bfd   : keeps stub LTO enabled (small stubs), ICF disabled\n"
 	@printf "  lld   : stub LTO is disabled automatically for compatibility\n"
 	@printf "\n"
