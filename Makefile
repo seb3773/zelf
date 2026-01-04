@@ -455,6 +455,7 @@ $(PACKER_BIN): $(BUILD_INFO_H) $(ALL_STUB_OBJS) $(PACKER_C) $(CSC_COMP_OBJS) $(S
 	  rm -f $(BUILD_DIR)/*.elf; \
 	  rm -f $(BUILD_DIR)/stub_*_*.bin; \
 	  rm -f $(BUILD_DIR)/stubs.mk; \
+	  rm -f $(BUILD_DIR)/build_info.h; \
 	  rm -f $(BUILD_DIR)/stage0_nrv2b_le32*; \
 	fi
 
@@ -508,6 +509,7 @@ clean:
 	rm -f $(BUILD_DIR)/embed_stub_*.o
 	rm -f $(BUILD_DIR)/stage0_nrv2b_le32*.*
 	rm -f $(STUB_SRC)/stub_vars.h.bak
+	rm -f $(BUILD_DIR)/build_info.h
 	rm -f $(BUILD_DIR)/zelf
 
 .PHONY: distclean
