@@ -516,6 +516,20 @@ clean:
 distclean: clean
 	@printf "\033[37;43m✔ Cleaning complete\033[0m\n"
 
+.PHONY: help
+help:
+	@printf "\n"
+	@printf "Build options:\n"
+	@printf "  STATIC=1                Build static packer (stubs are separate)\n"
+	@printf "  FUSE_LD=auto|gold|bfd|lld  Select linker for GCC (default: auto)\n"
+	@printf "\n"
+	@printf "Linker notes:\n"
+	@printf "  auto  : prefers ld.gold if present, else ld.bfd if present, else system default ld\n"
+	@printf "  gold  : enables ICF and keeps stub LTO enabled (smallest stubs)\n"
+	@printf "  bfd   : keeps stub LTO enabled (small stubs), ICF disabled\n"
+	@printf "  lld   : stub LTO is disabled automatically for compatibility\n"
+	@printf "\n"
+
 # Créer les répertoires si nécessaire
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
