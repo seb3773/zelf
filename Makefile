@@ -8,15 +8,15 @@ CXX = g++
 LD = ld
 NASM = nasm
 
-FUSE_LD ?=
-ifeq ($(strip $(FUSE_LD)),)
-FUSE_LD := $(shell if command -v ld.gold >/dev/null 2>&1; then echo gold; elif command -v ld.lld >/dev/null 2>&1; then echo lld; else echo bfd; fi)
+FUSE_LD ?= lld
+ifneq ($(FUSE_LD),lld)
+ $(error Only lld is supported. Install lld and use: make FUSE_LD=lld)
 endif
-ifeq ($(FUSE_LD),none)
-FUSE_LD_FLAG =
-else
-FUSE_LD_FLAG = -fuse-ld=$(FUSE_LD)
+HAVE_LLD := $(shell command -v ld.lld >/dev/null 2>&1 && echo yes || echo no)
+ifeq ($(HAVE_LLD),no)
+ $(error ld.lld not found. Install package 'lld' (openSUSE: sudo zypper -n install lld))
 endif
+FUSE_LD_FLAG = -fuse-ld=lld
 
 # Static build toggle (usage: make STATIC=1)
 STATIC ?= 0
