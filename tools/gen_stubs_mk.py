@@ -301,6 +301,51 @@ def generate_makefile():
                     print(f"\t@$(LD) -r -b binary -o $@ $<")
                     print("")
 
+    # SFX stubs (extract-only self-extracting archives)
+    for algo_name, algo_conf in ALGOS.items():
+        target_elf = f"$(BUILD_DIR)/stub_sfx_{algo_name}.elf"
+        target_bin = f"$(BUILD_DIR)/stubs/stub_sfx_{algo_name}.bin"
+        target_obj = f"$(BUILD_DIR)/embed_stub_sfx_{algo_name}.o"
+
+        print(f"{target_elf}: $(BUILD_DIR)/start_sfx.o $(STUB_SRC)/stub_sfx.c {' '.join(algo_conf['sources'])} $(STUB_SRC)/mini_mem.S $(STUB_SRC)/stub.ld | $(BUILD_DIR)")
+        print(f'\t@printf "\\033[37;48;5;19m○─○ Linking SFX stub {algo_name.upper()}...\\033[0m\\n"')
+
+        defines = []
+        defines.extend(algo_conf['defines'])
+        defines_str = " ".join([f"-D{d}" for d in defines])
+
+        includes = []
+        includes.append("-I $(STUB_SRC)")
+        for inc in algo_conf['extra_includes']:
+            includes.append(f"-I {inc}")
+        includes_str = " ".join(includes)
+
+        cflags = "$(STUB_PROD_CFLAGS)"
+        ldflags = "$(STUB_PROD_LDFLAGS)"
+
+        src_files = [
+            "$(BUILD_DIR)/start_sfx.o",
+            "$(STUB_SRC)/stub_sfx.c",
+            *algo_conf['sources'],
+            "$(STUB_SRC)/mini_mem.S",
+        ]
+        src_files_str = " ".join(src_files)
+
+        print(f"\t@$(CC) -fuse-ld=gold {defines_str} -nostdlib -static -Os -flto -ffunction-sections -fdata-sections -fvisibility=hidden -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector -fno-builtin -fomit-frame-pointer -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1 -fmerge-all-constants -fno-ident {cflags} {includes_str} -o $@ {src_files_str} -Wl,-e,_start,-T,$(STUB_SRC)/stub.ld -Wl,-z,noexecstack -Wl,--build-id=none -Wl,--relax -Wl,--gc-sections -Wl,-O1,--strip-all {ldflags}")
+        print("")
+
+        print(f"{target_bin}: {target_elf} | $(BUILD_DIR)/stubs")
+        print(f'\t@printf "\\033[37;44m⚡ Generating SFX BIN for {algo_name.upper()}...\\033[0m\\n"')
+        print(f"\t@objcopy -O binary -j .text -j .rodata $< $@")
+        print("")
+
+        print(f"{target_obj}: {target_bin} | $(BUILD_DIR)")
+        print(f'\t@printf "\\033[37;44m→→ Embedding SFX BIN into OBJ for {algo_name.upper()}...\\033[0m\\n"')
+        print(f"\t@$(LD) -r -b binary -o $@ $<")
+        print("")
+
+        all_embed_objs.append(target_obj)
+
     # Output aggregate variable
     print("ALL_STUB_OBJS = \\")
     for obj in all_embed_objs:
