@@ -461,17 +461,35 @@ $(PACKER_BIN): $(BUILD_INFO_H) $(ALL_STUB_OBJS) $(PACKER_C) $(CSC_COMP_OBJS) $(S
 
 $(BUILD_INFO_H): | $(BUILD_DIR)
 	@dt=$$(date '+%Y-%m-%d %H:%M:%S'); \
+	 distro=unknown; \
+	 if [ -r /etc/os-release ]; then \
+	   . /etc/os-release; \
+	   distro=$${ID:-unknown}; \
+	   case "$$distro" in \
+	     opensuse*|suse|sles) distro=opensuse ;; \
+	   esac; \
+	 fi; \
 	 os=$$(uname -sr 2>/dev/null || echo unknown); \
 	 cpu=$$(uname -m 2>/dev/null || echo unknown); \
 	 model=$$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2- | sed 's/^ *//'); \
 	 if [ -n "$$model" ]; then cpu="$$cpu / $$model"; fi; \
 	 if [ "$(STATIC)" = "1" ]; then link=Static; else link=Dynamic; fi; \
+	 lsel="$(FUSE_LD)"; \
+	 if [ -z "$$lsel" ] || [ "$$lsel" = "default" ]; then lsel=default; fi; \
+	 case "$$lsel" in \
+	   gold) linker="ld.gold" ;; \
+	   bfd) linker="ld.bfd" ;; \
+	   lld) linker="ld.lld" ;; \
+	   *) linker="ld" ;; \
+	 esac; \
 	 { \
 		echo '#ifndef ZELF_BUILD_INFO_H'; \
 		echo '#define ZELF_BUILD_INFO_H'; \
 		echo '#define ZELF_BUILD_DATETIME "'"$$dt"'"'; \
+		echo '#define ZELF_BUILD_DISTRO "'"$$distro"'"'; \
 		echo '#define ZELF_BUILD_HOST_OS "'"$$os"'"'; \
 		echo '#define ZELF_BUILD_HOST_CPU "'"$$cpu"'"'; \
+		echo '#define ZELF_BUILD_LINKER "'"$$linker"'"'; \
 		echo '#define ZELF_BUILD_LINKAGE "'"$$link"'"'; \
 		echo '#endif'; \
 	 } > $@.tmp; \
