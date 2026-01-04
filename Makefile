@@ -327,6 +327,10 @@ $(BUILD_DIR)/start.o: $(STUB_SRC)/start.S | $(BUILD_DIR)
 	@printf "\033[37;44m░▒▓ Compiling start.S...\033[0m\n"
 	@$(CC) -c $(STUB_SRC)/start.S -o $(BUILD_DIR)/start.o
 
+$(BUILD_DIR)/start_sfx.o: $(STUB_SRC)/start_sfx.S | $(BUILD_DIR)
+	@printf "\033[37;44m░▒▓ Compiling start_sfx.S...\033[0m\n"
+	@$(CC) -c $(STUB_SRC)/start_sfx.S -o $(BUILD_DIR)/start_sfx.o
+
 $(BUILD_DIR)/elfz_handoff_gate.o: $(STUB_SRC)/elfz_handoff_gate.S | $(BUILD_DIR)
 	@printf "\033[37;44m░▒▓ Compiling elfz_handoff_gate.S...\033[0m\n"
 	@$(CC) -c $(STUB_SRC)/elfz_handoff_gate.S -o $(BUILD_DIR)/elfz_handoff_gate.o
