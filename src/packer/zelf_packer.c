@@ -2105,6 +2105,9 @@ int main(int argc, char *argv[]) {
   int no_backup = 0;
   int mode_archive = 0;
   int mode_archive_tar = 0;
+  int mode_archive_sfx = 0;
+  int mode_archive_tar_sfx = 0;
+  int mode_archive_list = 0;
   int mode_unpack = 0;
   int mode_help_overview = 0;
   int mode_help_full = 0;
@@ -2143,7 +2146,9 @@ int main(int argc, char *argv[]) {
         input_path = argv[i];
         continue;
       }
-      if ((mode_archive || mode_archive_tar || mode_unpack) && !output_arg) {
+      if ((mode_archive || mode_archive_tar || mode_archive_sfx ||
+           mode_archive_tar_sfx || mode_unpack) &&
+          !output_arg) {
         output_arg = argv[i];
         continue;
       }
@@ -2297,6 +2302,12 @@ int main(int argc, char *argv[]) {
       mode_archive = 1;
     } else if (strcmp(argv[i], "--archive-tar") == 0) {
       mode_archive_tar = 1;
+    } else if (strcmp(argv[i], "--archive-sfx") == 0) {
+      mode_archive_sfx = 1;
+    } else if (strcmp(argv[i], "--archive-tar-sfx") == 0) {
+      mode_archive_tar_sfx = 1;
+    } else if (strcmp(argv[i], "--archive-list") == 0) {
+      mode_archive_list = 1;
     } else if (strcmp(argv[i], "--unpack") == 0) {
       mode_unpack = 1;
     } else if (argv[i][0] == '-' && strcmp(argv[i], "-") != 0) {
@@ -2307,7 +2318,9 @@ int main(int argc, char *argv[]) {
     } else if (!input_path) {
       input_path = argv[i];
     } else {
-      if ((mode_archive || mode_archive_tar || mode_unpack) && !output_arg) {
+      if ((mode_archive || mode_archive_tar || mode_archive_sfx ||
+           mode_archive_tar_sfx || mode_unpack) &&
+          !output_arg) {
         output_arg = argv[i];
       } else {
         fprintf(stderr,
@@ -2325,15 +2338,16 @@ int main(int argc, char *argv[]) {
 
   if (want_help) {
     if (output_arg || mode_unpack || mode_archive || mode_archive_tar ||
-        codec_explicit || use_password) {
+        mode_archive_sfx || mode_archive_tar_sfx ||
+        mode_archive_list || codec_explicit || use_password) {
       if (!header_printed) {
         print_main_header();
         header_printed = 1;
       }
       fprintf(stderr,
               "[%s%s%s] Error: help options cannot be combined with --output, "
-              "--unpack, --archive, --archive-tar, explicit codec selection, "
-              "or --password.\n",
+              "--unpack, --archive, --archive-tar, --archive-sfx, "
+              "--archive-tar-sfx, --archive-list, explicit codec selection, or --password.\n",
               PK_ERR, PK_SYM_ERR, PK_RES);
       print_help(argv[0]);
       return 1;
@@ -2353,27 +2367,32 @@ int main(int argc, char *argv[]) {
   }
 
   if (mode_unpack &&
-      (mode_archive || mode_archive_tar || codec_explicit || use_password)) {
+      (mode_archive || mode_archive_tar || mode_archive_sfx ||
+       mode_archive_tar_sfx || mode_archive_list || codec_explicit ||
+       use_password)) {
     if (!header_printed) {
       print_main_header();
       header_printed = 1;
     }
     fprintf(stderr,
             "[%s%s%s] Error: --unpack cannot be combined with --archive, "
-            "--archive-tar, explicit codec selection, or --password.\n",
+            "--archive-tar, --archive-sfx, --archive-tar-sfx, --archive-list, "
+            "explicit codec selection, or --password.\n",
             PK_ERR, PK_SYM_ERR, PK_RES);
     print_help(argv[0]);
     return 1;
   }
 
-  if ((mode_archive || mode_archive_tar) && (mode_best || mode_crazy)) {
+  if ((mode_archive || mode_archive_tar || mode_archive_sfx ||
+       mode_archive_tar_sfx || mode_archive_list) &&
+      (mode_best || mode_crazy)) {
     if (!header_printed) {
       print_main_header();
       header_printed = 1;
     }
     fprintf(stderr,
-            "[%s%s%s] Error: --archive/--archive-tar cannot be combined with "
-            "-best or -crazy.\n",
+            "[%s%s%s] Error: archive modes cannot be combined with -best or "
+            "-crazy.\n",
             PK_ERR, PK_SYM_ERR, PK_RES);
     return 1;
   }
@@ -2409,7 +2428,9 @@ int main(int argc, char *argv[]) {
             PK_ERR, PK_SYM_ERR, PK_RES);
     return 1;
   }
-  if ((mode_best || mode_crazy) && (mode_archive || mode_archive_tar || mode_unpack)) {
+  if ((mode_best || mode_crazy) &&
+      (mode_archive || mode_archive_tar || mode_archive_sfx ||
+       mode_archive_tar_sfx || mode_archive_list || mode_unpack)) {
     if (!header_printed) {
       print_main_header();
       header_printed = 1;
@@ -2422,10 +2443,13 @@ int main(int argc, char *argv[]) {
   }
 
   const char *archive_output_path = NULL;
-  if (mode_archive || mode_archive_tar || mode_unpack)
+  if (mode_archive || mode_archive_tar || mode_archive_sfx ||
+      mode_archive_tar_sfx || mode_archive_list || mode_unpack)
     archive_output_path = output_arg;
 
-  if ((mode_archive || mode_archive_tar || mode_unpack) && archive_output_path &&
+  if ((mode_archive || mode_archive_tar || mode_archive_sfx ||
+       mode_archive_tar_sfx || mode_archive_list || mode_unpack) &&
+      archive_output_path &&
       strcmp(archive_output_path, "-") == 0) {
     g_ui_stream = stderr;
     g_no_progress = 1;
@@ -2435,7 +2459,8 @@ int main(int argc, char *argv[]) {
 
   char final_output_path[4096];
   int should_backup = 0;
-  if (!mode_archive && !mode_archive_tar && !mode_unpack) {
+  if (!mode_archive && !mode_archive_tar && !mode_archive_sfx &&
+      !mode_archive_tar_sfx && !mode_archive_list && !mode_unpack) {
     if (output_arg) {
       struct stat st;
       if (stat(output_arg, &st) == 0 && S_ISDIR(st.st_mode)) {
@@ -2483,6 +2508,15 @@ int main(int argc, char *argv[]) {
   } else if (mode_archive_tar) {
     FILE *out = g_ui_stream ? g_ui_stream : stdout;
     fprintf(out, "%s❖ Archive TAR mode%s\n", PKC(FYW), PK_RES);
+  } else if (mode_archive_sfx) {
+    FILE *out = g_ui_stream ? g_ui_stream : stdout;
+    fprintf(out, "%s❖ Archive SFX mode%s\n", PKC(FYW), PK_RES);
+  } else if (mode_archive_tar_sfx) {
+    FILE *out = g_ui_stream ? g_ui_stream : stdout;
+    fprintf(out, "%s❖ Archive TAR SFX mode%s\n", PKC(FYW), PK_RES);
+  } else if (mode_archive_list) {
+    FILE *out = g_ui_stream ? g_ui_stream : stdout;
+    fprintf(out, "%s❖ Archive LIST mode%s\n", PKC(FYW), PK_RES);
   }
 
   // Handle Archive/Unpack modes (not allowed with -best)
@@ -2511,6 +2545,35 @@ int main(int argc, char *argv[]) {
              elapsed);
     }
     return arc_rc;
+  }
+  if (mode_archive_sfx) {
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    int arc_rc = archive_sfx_file(input_path, archive_output_path, codec);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    double elapsed = (double)(t1.tv_sec - t0.tv_sec) +
+                     (double)(t1.tv_nsec - t0.tv_nsec) / 1e9;
+    if (g_verbose) {
+      printf("[%s%s%s] Archive time: %.3f s\n", PK_INFO, PK_SYM_INFO, PK_RES,
+             elapsed);
+    }
+    return arc_rc;
+  }
+  if (mode_archive_tar_sfx) {
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    int arc_rc = archive_sfx_tar_dir(input_path, archive_output_path, codec);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    double elapsed = (double)(t1.tv_sec - t0.tv_sec) +
+                     (double)(t1.tv_nsec - t0.tv_nsec) / 1e9;
+    if (g_verbose) {
+      printf("[%s%s%s] Archive time: %.3f s\n", PK_INFO, PK_SYM_INFO, PK_RES,
+             elapsed);
+    }
+    return arc_rc;
+  }
+  if (mode_archive_list) {
+    return archive_list(input_path);
   }
   if (mode_unpack) {
     if (strcmp(input_path, "-") == 0) {

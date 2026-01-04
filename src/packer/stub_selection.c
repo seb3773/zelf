@@ -106,6 +106,51 @@ extern const unsigned char _binary_build_stubs_stub_blz_dynamic_kexe_bin_end[];
 extern const unsigned char _binary_build_stubs_stub_blz_static_kexe_bin_start[];
 extern const unsigned char _binary_build_stubs_stub_blz_static_kexe_bin_end[];
 
+extern const unsigned char _binary_build_stubs_stub_sfx_lz4_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lz4_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_rnc_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_rnc_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_apultra_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_apultra_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzav_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzav_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_zstd_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_zstd_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_blz_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_blz_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_doboz_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_doboz_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_exo_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_exo_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_pp_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_pp_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_qlz_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_qlz_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_snappy_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_snappy_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_shrinkler_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_shrinkler_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzma_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzma_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_zx7b_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_zx7b_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_zx0_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_zx0_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_density_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_density_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_sc_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_sc_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzsa_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzsa_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzham_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzham_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzfse_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_lzfse_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_csc_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_csc_bin_end[];
+extern const unsigned char _binary_build_stubs_stub_sfx_nz1_bin_start[];
+extern const unsigned char _binary_build_stubs_stub_sfx_nz1_bin_end[];
+
 // Password-enabled stubs
 extern const unsigned char
     _binary_build_stubs_stub_lz4_dynamic_kexe_pwd_bin_start[];
@@ -1254,3 +1299,81 @@ void select_embedded_stub(const char *codec, int dynamic, int password,
   *start = s;
   *end = e;
 }
+
+ void select_embedded_sfx_stub(const char *codec, const unsigned char **start,
+                               const unsigned char **end) {
+   const unsigned char *s = NULL, *e = NULL;
+
+   if (strcmp(codec, "lz4") == 0) {
+     s = _binary_build_stubs_stub_sfx_lz4_bin_start;
+     e = _binary_build_stubs_stub_sfx_lz4_bin_end;
+   } else if (strcmp(codec, "rnc") == 0) {
+     s = _binary_build_stubs_stub_sfx_rnc_bin_start;
+     e = _binary_build_stubs_stub_sfx_rnc_bin_end;
+   } else if (strcmp(codec, "apultra") == 0) {
+     s = _binary_build_stubs_stub_sfx_apultra_bin_start;
+     e = _binary_build_stubs_stub_sfx_apultra_bin_end;
+   } else if (strcmp(codec, "lzav") == 0) {
+     s = _binary_build_stubs_stub_sfx_lzav_bin_start;
+     e = _binary_build_stubs_stub_sfx_lzav_bin_end;
+   } else if (strcmp(codec, "zstd") == 0) {
+     s = _binary_build_stubs_stub_sfx_zstd_bin_start;
+     e = _binary_build_stubs_stub_sfx_zstd_bin_end;
+   } else if (strcmp(codec, "blz") == 0) {
+     s = _binary_build_stubs_stub_sfx_blz_bin_start;
+     e = _binary_build_stubs_stub_sfx_blz_bin_end;
+   } else if (strcmp(codec, "doboz") == 0) {
+     s = _binary_build_stubs_stub_sfx_doboz_bin_start;
+     e = _binary_build_stubs_stub_sfx_doboz_bin_end;
+   } else if (strcmp(codec, "exo") == 0) {
+     s = _binary_build_stubs_stub_sfx_exo_bin_start;
+     e = _binary_build_stubs_stub_sfx_exo_bin_end;
+   } else if (strcmp(codec, "pp") == 0) {
+     s = _binary_build_stubs_stub_sfx_pp_bin_start;
+     e = _binary_build_stubs_stub_sfx_pp_bin_end;
+   } else if (strcmp(codec, "qlz") == 0) {
+     s = _binary_build_stubs_stub_sfx_qlz_bin_start;
+     e = _binary_build_stubs_stub_sfx_qlz_bin_end;
+   } else if (strcmp(codec, "snappy") == 0) {
+     s = _binary_build_stubs_stub_sfx_snappy_bin_start;
+     e = _binary_build_stubs_stub_sfx_snappy_bin_end;
+   } else if (strcmp(codec, "shrinkler") == 0) {
+     s = _binary_build_stubs_stub_sfx_shrinkler_bin_start;
+     e = _binary_build_stubs_stub_sfx_shrinkler_bin_end;
+   } else if (strcmp(codec, "lzma") == 0) {
+     // minlzma is stored as lzma codec, marker is handled in archive format
+     // SFX stub still compiled with CODEC_LZMA.
+     s = _binary_build_stubs_stub_sfx_lzma_bin_start;
+     e = _binary_build_stubs_stub_sfx_lzma_bin_end;
+   } else if (strcmp(codec, "zx7b") == 0) {
+     s = _binary_build_stubs_stub_sfx_zx7b_bin_start;
+     e = _binary_build_stubs_stub_sfx_zx7b_bin_end;
+   } else if (strcmp(codec, "zx0") == 0) {
+     s = _binary_build_stubs_stub_sfx_zx0_bin_start;
+     e = _binary_build_stubs_stub_sfx_zx0_bin_end;
+   } else if (strcmp(codec, "density") == 0) {
+     s = _binary_build_stubs_stub_sfx_density_bin_start;
+     e = _binary_build_stubs_stub_sfx_density_bin_end;
+   } else if (strcmp(codec, "sc") == 0) {
+     s = _binary_build_stubs_stub_sfx_sc_bin_start;
+     e = _binary_build_stubs_stub_sfx_sc_bin_end;
+   } else if (strcmp(codec, "lzsa") == 0) {
+     s = _binary_build_stubs_stub_sfx_lzsa_bin_start;
+     e = _binary_build_stubs_stub_sfx_lzsa_bin_end;
+   } else if (strcmp(codec, "lzham") == 0) {
+     s = _binary_build_stubs_stub_sfx_lzham_bin_start;
+     e = _binary_build_stubs_stub_sfx_lzham_bin_end;
+   } else if (strcmp(codec, "lzfse") == 0) {
+     s = _binary_build_stubs_stub_sfx_lzfse_bin_start;
+     e = _binary_build_stubs_stub_sfx_lzfse_bin_end;
+   } else if (strcmp(codec, "csc") == 0) {
+     s = _binary_build_stubs_stub_sfx_csc_bin_start;
+     e = _binary_build_stubs_stub_sfx_csc_bin_end;
+   } else if (strcmp(codec, "nz1") == 0) {
+     s = _binary_build_stubs_stub_sfx_nz1_bin_start;
+     e = _binary_build_stubs_stub_sfx_nz1_bin_end;
+   }
+
+   *start = s;
+   *end = e;
+ }
