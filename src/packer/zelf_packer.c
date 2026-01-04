@@ -160,8 +160,10 @@ static void print_version_full(void) {
   print_main_header();
   fprintf(out, "%s%s build%s - %s%s\n", PKC(GREY17), ZELF_BUILD_LINKAGE, PK_RES,
           ZELF_BUILD_DATETIME, PK_RES);
-  fprintf(out, "Built on %s with %s\n\n", ZELF_BUILD_HOST_OS,
-          ZELF_BUILD_HOST_CPU);
+  fprintf(out, "Built on %s\n", ZELF_BUILD_HOST_OS);
+  fprintf(out, "Distro: %s\n", ZELF_BUILD_DISTRO);
+  fprintf(out, "Linker: %s\n", ZELF_BUILD_LINKER);
+  fprintf(out, "CPU: %s\n\n", ZELF_BUILD_HOST_CPU);
 }
 
 // Embedded stage0 NRV2B LE32 (binary) and offsets
