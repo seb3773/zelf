@@ -758,6 +758,56 @@ static const char *marker_for_codec(const char *codec) {
   return "zELFl4";
 }
 
+static const char *codec_name_for_marker(const char *marker) {
+  if (!marker)
+    return "Unknown";
+  if (strcmp(marker, "zELFl4") == 0)
+    return "LZ4";
+  if (strcmp(marker, "zELFap") == 0)
+    return "Apultra";
+  if (strcmp(marker, "zELFzx") == 0)
+    return "ZX7B";
+  if (strcmp(marker, "zELFz0") == 0)
+    return "ZX0";
+  if (strcmp(marker, "zELFzd") == 0)
+    return "ZSTD";
+  if (strcmp(marker, "zELFbz") == 0)
+    return "BriefLZ";
+  if (strcmp(marker, "zELFex") == 0)
+    return "Exomizer";
+  if (strcmp(marker, "zELFpp") == 0)
+    return "PowerPacker";
+  if (strcmp(marker, "zELFsn") == 0)
+    return "Snappy";
+  if (strcmp(marker, "zELFdz") == 0)
+    return "Doboz";
+  if (strcmp(marker, "zELFqz") == 0)
+    return "QuickLZ";
+  if (strcmp(marker, "zELFlv") == 0)
+    return "LZAV";
+  if (strcmp(marker, "zELFla") == 0)
+    return "LZMA";
+  if (strcmp(marker, "zELFsh") == 0)
+    return "Shrinkler";
+  if (strcmp(marker, "zELFsc") == 0)
+    return "StoneCracker";
+  if (strcmp(marker, "zELFls") == 0)
+    return "LZSA2";
+  if (strcmp(marker, "zELFde") == 0)
+    return "Density";
+  if (strcmp(marker, "zELFlz") == 0)
+    return "LZHAM";
+  if (strcmp(marker, "zELFrn") == 0)
+    return "RNC";
+  if (strcmp(marker, "zELFse") == 0)
+    return "LZFSE";
+  if (strcmp(marker, "zELFcs") == 0)
+    return "CSC";
+  if (strcmp(marker, "zELFnz") == 0)
+    return "Nanozip";
+  return "Unknown";
+}
+
 int archive_file(const char *input_path, const char *output_path,
                  const char *codec) {
   FILE *logf = stdout;
@@ -881,6 +931,8 @@ int archive_file(const char *input_path, const char *output_path,
 
   fprintf(logf, "[%s%s%s] Written to %s\n", PK_OK, PK_SYM_OK, PK_RES,
           final_out);
+  fprintf(logf, "[%s%s%s] Compressed size: %d bytes\n", PK_INFO, PK_SYM_INFO,
+          PK_RES, compressed_size);
   fprintf(logf, "[%s%s%s] Ratio: %.1f%%\n", PK_INFO, PK_SYM_INFO, PK_RES,
           100.0 * compressed_size / input_size);
 
@@ -1020,6 +1072,8 @@ int archive_tar_dir(const char *dir_path, const char *output_path,
 
   fprintf(logf, "[%s%s%s] Written to %s\n", PK_OK, PK_SYM_OK, PK_RES,
           final_out);
+  fprintf(logf, "[%s%s%s] Compressed size: %d bytes\n", PK_INFO, PK_SYM_INFO,
+          PK_RES, compressed_size);
   fprintf(logf, "[%s%s%s] Ratio: %.1f%%\n", PK_INFO, PK_SYM_INFO, PK_RES,
           100.0 * compressed_size / input_size);
 
@@ -1175,6 +1229,10 @@ int archive_sfx_file(const char *input_path, const char *output_path,
 
   fprintf(logf, "[%s%s%s] SFX written to %s\n", PK_OK, PK_SYM_OK, PK_RES,
           final_out);
+  fprintf(logf, "[%s%s%s] Compressed size: %d bytes\n", PK_INFO, PK_SYM_INFO,
+          PK_RES, compressed_size);
+  fprintf(logf, "[%s%s%s] Ratio: %.1f%%\n", PK_INFO, PK_SYM_INFO, PK_RES,
+          100.0 * compressed_size / input_size);
   free(payload);
   free(base_dup_name);
   free(input_data);
@@ -1317,6 +1375,10 @@ int archive_sfx_tar_dir(const char *dir_path, const char *output_path,
 
   fprintf(logf, "[%s%s%s] SFX written to %s\n", PK_OK, PK_SYM_OK, PK_RES,
           final_out);
+  fprintf(logf, "[%s%s%s] Compressed size: %d bytes\n", PK_INFO, PK_SYM_INFO,
+          PK_RES, compressed_size);
+  fprintf(logf, "[%s%s%s] Ratio: %.1f%%\n", PK_INFO, PK_SYM_INFO, PK_RES,
+          100.0 * compressed_size / input_size);
   free(payload);
   free(dir_dup_name);
   free(input_data);
@@ -1426,11 +1488,11 @@ int archive_list(const char *input_path) {
 
   fprintf(out, "[%s%s%s] Archive info:\n", PK_INFO, PK_SYM_INFO, PK_RES);
   fprintf(out, "[%s%s%s] Container: %s\n", PK_INFO, PK_SYM_INFO, PK_RES,
-          is_sfx ? "SFX" : "ZLF");
+          is_sfx ? "ZLF-SFX" : "ZLF");
   fprintf(out, "[%s%s%s] Type: %s\n", PK_INFO, PK_SYM_INFO, PK_RES,
           is_tar ? "tar" : "single");
-  fprintf(out, "[%s%s%s] Codec marker: %s\n", PK_INFO, PK_SYM_INFO, PK_RES,
-          marker);
+  fprintf(out, "[%s%s%s] Codec: %s\n", PK_INFO, PK_SYM_INFO, PK_RES,
+          codec_name_for_marker(marker));
   fprintf(out, "[%s%s%s] Stored name: %s\n", PK_INFO, PK_SYM_INFO, PK_RES,
           name_buf[0] ? name_buf : "(none)");
   fprintf(out, "[%s%s%s] Uncompressed size: %llu bytes\n", PK_INFO,

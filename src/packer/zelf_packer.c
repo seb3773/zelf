@@ -2280,7 +2280,8 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "-zstd") == 0) {
       codec = "zstd";
       codec_explicit = 1;
-    } else if (strcmp(argv[i], "-shr") == 0) {
+    } else if (strcmp(argv[i], "-shr") == 0 ||
+               strcmp(argv[i], "-shrinkler") == 0) {
       codec = "shrinkler";
       codec_explicit = 1;
     } else if (strcmp(argv[i], "-stcr") == 0) {
@@ -2293,7 +2294,8 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "-lzham") == 0) {
       codec = "lzham";
       codec_explicit = 1;
-    } else if (strcmp(argv[i], "-dsty") == 0) {
+    } else if (strcmp(argv[i], "-dsty") == 0 ||
+               strcmp(argv[i], "-density") == 0) {
       codec = "density";
       codec_explicit = 1;
     } else if (strcmp(argv[i], "-crazy") == 0) {
@@ -2303,11 +2305,13 @@ int main(int argc, char *argv[]) {
       mode_help_overview = 1;
     } else if (strcmp(argv[i], "--help-full") == 0) {
       mode_help_full = 1;
-    } else if (strcmp(argv[i], "--help-algos") == 0) {
+    } else if (strcmp(argv[i], "--help-algos") == 0 ||
+               strcmp(argv[i], "--algos") == 0) {
       mode_help_algos = 1;
     } else if (strcmp(argv[i], "--help-faq") == 0) {
       mode_help_faq = 1;
     } else if (strcmp(argv[i], "--help-credits") == 0 ||
+               strcmp(argv[i], "--credits") == 0 ||
                strcmp(argv[i], "--help--credits") == 0) {
       mode_help_credits = 1;
     } else if (strcmp(argv[i], "--no-colors") == 0) {
@@ -2355,9 +2359,17 @@ int main(int argc, char *argv[]) {
       }
     } else if (strncmp(argv[i], "--output=", 9) == 0) {
       output_arg = argv[i] + 9;
+    } else if (strncmp(argv[i], "--out=", 6) == 0) {
+      output_arg = argv[i] + 6;
     } else if (strncmp(argv[i], "--output", 8) == 0 && argv[i][8] != '\0') {
       output_arg = argv[i] + 8;
     } else if (strcmp(argv[i], "--output") == 0) {
+      if (i + 1 >= argc) {
+        print_help(argv[0]);
+        return 1;
+      }
+      output_arg = argv[++i];
+    } else if (strcmp(argv[i], "--out") == 0) {
       if (i + 1 >= argc) {
         print_help(argv[0]);
         return 1;
@@ -2373,7 +2385,8 @@ int main(int argc, char *argv[]) {
       mode_archive_sfx = 1;
     } else if (strcmp(argv[i], "--archive-tar-sfx") == 0) {
       mode_archive_tar_sfx = 1;
-    } else if (strcmp(argv[i], "--archive-list") == 0) {
+    } else if (strcmp(argv[i], "--archive-list") == 0 ||
+               strcmp(argv[i], "--list") == 0) {
       mode_archive_list = 1;
     } else if (strcmp(argv[i], "--unpack") == 0) {
       mode_unpack = 1;
