@@ -1,6 +1,14 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <libgen.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -180,7 +188,7 @@ extern const unsigned char _binary_build_stage0_nrv2b_le32_bin_end[];
 static int build_zstd_stage0_blob(const unsigned char *stub, size_t stub_sz,
                                   int has_pt_interp, size_t packed_block_size,
                                   unsigned char **out_buf, size_t *out_filesz,
-                                  size_t *out_memsz) {
+                                  size_t *out_memsz, uint8_t stage0_flags) {
   const unsigned char *s0 = _binary_build_stage0_nrv2b_le32_bin_start;
   size_t s0_sz = (size_t)(_binary_build_stage0_nrv2b_le32_bin_end -
                           _binary_build_stage0_nrv2b_le32_bin_start);
@@ -260,10 +268,19 @@ static int build_zstd_stage0_blob(const unsigned char *stub, size_t stub_sz,
   }
   memcpy(buf, s0, s0_sz);
   // Patch header (little-endian)
-  *(uint32_t *)(buf + STAGE0_HDR_ULEN_OFF) = out_cap;
-  *(uint32_t *)(buf + STAGE0_HDR_CLEN_OFF) = clen;
-  *(uint64_t *)(buf + STAGE0_HDR_DST_OFF) = (uint64_t)dst_off;
-  *(uint64_t *)(buf + STAGE0_HDR_BLOB_OFF) = (uint64_t)blob_off;
+  {
+    uint32_t v32;
+    uint64_t v64;
+    v32 = out_cap;
+    memcpy(buf + STAGE0_HDR_ULEN_OFF, &v32, sizeof(v32));
+    v32 = clen;
+    memcpy(buf + STAGE0_HDR_CLEN_OFF, &v32, sizeof(v32));
+    v64 = (uint64_t)dst_off;
+    memcpy(buf + STAGE0_HDR_DST_OFF, &v64, sizeof(v64));
+    v64 = (uint64_t)blob_off;
+    memcpy(buf + STAGE0_HDR_BLOB_OFF, &v64, sizeof(v64));
+  }
+  buf[STAGE0_HDR_FLAGS_OFF] = stage0_flags;
 
   memcpy(buf + blob_off, comp, clen);
   free(comp);
@@ -280,7 +297,8 @@ static int build_density_stage0_blob(const unsigned char *stub, size_t stub_sz,
                                      int has_pt_interp,
                                      size_t packed_block_size,
                                      unsigned char **out_buf,
-                                     size_t *out_filesz, size_t *out_memsz) {
+                                     size_t *out_filesz, size_t *out_memsz,
+                                     uint8_t stage0_flags) {
   const unsigned char *s0 = _binary_build_stage0_nrv2b_le32_bin_start;
   size_t s0_sz = (size_t)(_binary_build_stage0_nrv2b_le32_bin_end -
                           _binary_build_stage0_nrv2b_le32_bin_start);
@@ -342,10 +360,19 @@ static int build_density_stage0_blob(const unsigned char *stub, size_t stub_sz,
     return -1;
   }
   memcpy(buf, s0, s0_sz);
-  *(uint32_t *)(buf + STAGE0_HDR_ULEN_OFF) = out_cap;
-  *(uint32_t *)(buf + STAGE0_HDR_CLEN_OFF) = clen;
-  *(uint64_t *)(buf + STAGE0_HDR_DST_OFF) = (uint64_t)dst_off;
-  *(uint64_t *)(buf + STAGE0_HDR_BLOB_OFF) = (uint64_t)blob_off;
+  {
+    uint32_t v32;
+    uint64_t v64;
+    v32 = out_cap;
+    memcpy(buf + STAGE0_HDR_ULEN_OFF, &v32, sizeof(v32));
+    v32 = clen;
+    memcpy(buf + STAGE0_HDR_CLEN_OFF, &v32, sizeof(v32));
+    v64 = (uint64_t)dst_off;
+    memcpy(buf + STAGE0_HDR_DST_OFF, &v64, sizeof(v64));
+    v64 = (uint64_t)blob_off;
+    memcpy(buf + STAGE0_HDR_BLOB_OFF, &v64, sizeof(v64));
+  }
+  buf[STAGE0_HDR_FLAGS_OFF] = stage0_flags;
 
   memcpy(buf + blob_off, comp, clen);
   free(comp);
@@ -637,11 +664,21 @@ static int pack_elf_once(const char *input_path, const char *output_path,
             PK_SYM_INFO, PK_RES);
   }
 
+  int stub_mode = 0;
+  if (has_pt_interp) {
+    if (ehdr->e_type == ET_DYN)
+      stub_mode = 1;
+    else if (ehdr->e_type == ET_EXEC)
+      stub_mode = 2;
+    else
+      stub_mode = 1;
+  }
+
   const unsigned char *stub_start = NULL, *stub_end = NULL;
   exe_filter_t saved_filter_sel = g_exe_filter;
   if (g_exe_filter == EXE_FILTER_NONE)
     g_exe_filter = EXE_FILTER_BCJ;
-  select_embedded_stub(codec, has_pt_interp, use_password, &stub_start,
+  select_embedded_stub(codec, stub_mode, use_password, &stub_start,
                        &stub_end);
   g_exe_filter = saved_filter_sel;
 
@@ -653,7 +690,8 @@ static int pack_elf_once(const char *input_path, const char *output_path,
     goto cleanup;
   }
   VPRINTF("[%s%s%s] Using embedded stub: %s (%s)\n", PK_INFO, PK_SYM_INFO,
-          PK_RES, codec, has_pt_interp ? "dynamic" : "static");
+          PK_RES, codec,
+          (stub_mode == 2) ? "dynexec" : (stub_mode == 1) ? "dynamic" : "static");
 
   size_t stub_size = (size_t)(stub_end - stub_start);
   size_t stub_memsz = stub_size;
@@ -982,7 +1020,7 @@ static int pack_elf_once(const char *input_path, const char *output_path,
     exe_filter_t saved_filter_sel2 = g_exe_filter;
     if (g_exe_filter == EXE_FILTER_NONE)
       g_exe_filter = EXE_FILTER_BCJ;
-    select_embedded_stub(codec, has_pt_interp, use_password, &stub_start,
+    select_embedded_stub(codec, stub_mode, use_password, &stub_start,
                          &stub_end);
     g_exe_filter = saved_filter_sel2;
     stub_size = (size_t)(stub_end - stub_start);
@@ -1214,8 +1252,8 @@ static int pack_elf_once(const char *input_path, const char *output_path,
                                sizeof(uint64_t) + sizeof(int) +
                                (size_t)comp_size;
     if (build_zstd_stage0_blob(stub_patch, stub_size, has_pt_interp,
-                               packed_block_size, &wrapped, &filesz,
-                               &memsz) != 0) {
+                               packed_block_size, &wrapped, &filesz, &memsz,
+                               elfz_flags) != 0) {
       fprintf(stderr, "[%s%s%s] Error: failed to build zstd stage0 wrapper\n",
               PK_ERR, PK_SYM_ERR, PK_RES);
       free(stub_patch);
@@ -1228,13 +1266,21 @@ static int pack_elf_once(const char *input_path, const char *output_path,
     stub_memsz = memsz;
     VPRINTF("[%s%s%s] zstd stage0 wrap: filesz=%zu, memsz=%zu\n", PK_INFO,
             PK_SYM_INFO, PK_RES, filesz, memsz);
-    VPRINTF("[%s%s%s] zstd stage0 header: ulen=%u clen=%u dst_off=0x%zx\n",
-            PK_INFO, PK_SYM_INFO, PK_RES,
-            (unsigned)*(uint32_t *)(wrapped + STAGE0_HDR_ULEN_OFF),
-            (unsigned)*(uint32_t *)(wrapped + STAGE0_HDR_CLEN_OFF),
-            (size_t)*(uint64_t *)(wrapped + STAGE0_HDR_DST_OFF));
-    VPRINTF("[%s%s%s] zstd stage0 blob_off=0x%zx\n", PK_INFO, PK_SYM_INFO,
-            PK_RES, (size_t)*(uint64_t *)(wrapped + STAGE0_HDR_BLOB_OFF));
+    {
+      uint32_t ulen = 0, clen = 0;
+      uint64_t dst_off = 0, blob_off = 0;
+      memcpy(&ulen, wrapped + STAGE0_HDR_ULEN_OFF, sizeof(ulen));
+      memcpy(&clen, wrapped + STAGE0_HDR_CLEN_OFF, sizeof(clen));
+      memcpy(&dst_off, wrapped + STAGE0_HDR_DST_OFF, sizeof(dst_off));
+      memcpy(&blob_off, wrapped + STAGE0_HDR_BLOB_OFF, sizeof(blob_off));
+      VPRINTF(
+          "[%s%s%s] zstd stage0 header: ulen=%u clen=%u dst_off=0x%zx\n",
+          PK_INFO, PK_SYM_INFO, PK_RES, (unsigned)ulen, (unsigned)clen,
+          (size_t)dst_off);
+      VPRINTF("[%s%s%s] zstd stage0 blob_off=0x%zx flags=0x%x\n", PK_INFO,
+              PK_SYM_INFO, PK_RES, (size_t)blob_off,
+              (unsigned)wrapped[STAGE0_HDR_FLAGS_OFF]);
+    }
 
   }
   // Final density stage0 wrap - ONLY for dynamic binaries
@@ -1260,8 +1306,8 @@ static int pack_elf_once(const char *input_path, const char *output_path,
 
     // Step 1: Create initial wrapper to determine stub_memsz
     if (build_density_stage0_blob(stub_patch, stub_size, has_pt_interp,
-                                  packed_block_size, &wrapped, &filesz,
-                                  &memsz) != 0) {
+                                  packed_block_size, &wrapped, &filesz, &memsz,
+                                  elfz_flags) != 0) {
       fprintf(stderr,
               "[%s%s%s] Error: failed to build density stage0 wrapper\n",
               PK_ERR, PK_SYM_ERR, PK_RES);
@@ -1270,9 +1316,14 @@ static int pack_elf_once(const char *input_path, const char *output_path,
     }
 
     // Step 2: Calculate stub_memsz (memory size needed for decompression)
-    size_t actual_dst_off = (size_t)*(uint64_t *)(wrapped + STAGE0_HDR_DST_OFF);
-    size_t decompressed_size =
-        (size_t)*(uint32_t *)(wrapped + STAGE0_HDR_ULEN_OFF);
+    uint64_t actual_dst_off_u64 = 0;
+    uint32_t decompressed_size_u32 = 0;
+    memcpy(&actual_dst_off_u64, wrapped + STAGE0_HDR_DST_OFF,
+           sizeof(actual_dst_off_u64));
+    memcpy(&decompressed_size_u32, wrapped + STAGE0_HDR_ULEN_OFF,
+           sizeof(decompressed_size_u32));
+    size_t actual_dst_off = (size_t)actual_dst_off_u64;
+    size_t decompressed_size = (size_t)decompressed_size_u32;
     size_t min_memsz_needed = actual_dst_off + decompressed_size + 4096;
     stub_memsz = (min_memsz_needed > memsz) ? min_memsz_needed : memsz;
 
@@ -1299,8 +1350,8 @@ static int pack_elf_once(const char *input_path, const char *output_path,
     // Step 4: Rebuild the wrapper with the correctly patched stub
     free(wrapped);
     if (build_density_stage0_blob(stub_patch, stub_size, has_pt_interp,
-                                  packed_block_size, &wrapped, &filesz,
-                                  &memsz) != 0) {
+                                  packed_block_size, &wrapped, &filesz, &memsz,
+                                  elfz_flags) != 0) {
       fprintf(stderr,
               "[%s%s%s] Error: failed to rebuild density stage0 wrapper\n",
               PK_ERR, PK_SYM_ERR, PK_RES);
@@ -1313,11 +1364,19 @@ static int pack_elf_once(const char *input_path, const char *output_path,
     stub_size = filesz;
     VPRINTF("[%s%s%s] density stage0 wrap: filesz=%zu, memsz=%zu\n", PK_INFO,
             PK_SYM_INFO, PK_RES, filesz, stub_memsz);
-    VPRINTF("[%s%s%s] density stage0 header: ulen=%u clen=%u dst_off=0x%zx\n",
-            PK_INFO, PK_SYM_INFO, PK_RES,
-            (unsigned)*(uint32_t *)(wrapped + STAGE0_HDR_ULEN_OFF),
-            (unsigned)*(uint32_t *)(wrapped + STAGE0_HDR_CLEN_OFF),
-            (size_t)*(uint64_t *)(wrapped + STAGE0_HDR_DST_OFF));
+    {
+      uint32_t ulen = 0, clen = 0;
+      uint64_t dst_off = 0;
+      memcpy(&ulen, wrapped + STAGE0_HDR_ULEN_OFF, sizeof(ulen));
+      memcpy(&clen, wrapped + STAGE0_HDR_CLEN_OFF, sizeof(clen));
+      memcpy(&dst_off, wrapped + STAGE0_HDR_DST_OFF, sizeof(dst_off));
+      VPRINTF(
+          "[%s%s%s] density stage0 header: ulen=%u clen=%u dst_off=0x%zx\n",
+          PK_INFO, PK_SYM_INFO, PK_RES, (unsigned)ulen, (unsigned)clen,
+          (size_t)dst_off);
+      VPRINTF("[%s%s%s] density stage0 flags=0x%x\n", PK_INFO, PK_SYM_INFO,
+              PK_RES, (unsigned)wrapped[STAGE0_HDR_FLAGS_OFF]);
+    }
 
     free(stub_patch);
   }

@@ -31,6 +31,7 @@
 #include <lz4.h>
 #include <lz4hc.h>
 #include <limits.h>
+#include <sys/resource.h>
 
 // Console progress (header-only) – include only progress bar #8, use raw clone
 // to avoid pthread
@@ -186,6 +187,17 @@ static size_t get_available_ram() {
   if (pages > 0 && page_size > 0)
     return (size_t)pages * (size_t)page_size;
   return (size_t)-1; // Unknown
+}
+
+static size_t get_rlimit_as_bytes(void) {
+  struct rlimit rl;
+  if (getrlimit(RLIMIT_AS, &rl) != 0)
+    return (size_t)-1;
+  if (rl.rlim_cur == RLIM_INFINITY)
+    return (size_t)-1;
+  if (rl.rlim_cur > (rlim_t)SIZE_MAX)
+    return (size_t)SIZE_MAX;
+  return (size_t)rl.rlim_cur;
 }
 
 // --- Lightweight Apultra declarations (avoid including shrink.h and
@@ -949,6 +961,47 @@ int compress_data_with_codec(const char *codec, const unsigned char *input,
   } else if (use_lzham) {
     start_progress("LZHAM compression", 8);
     update_progress(0, 8);
+
+    // LZHAM with dict_size_log2=29 allocates very large internal tables.
+    // Preflight an OOM check to avoid opaque ENOMEM failures.
+    const uint32_t dict_log2 = 29;
+    const size_t dict_sz = (size_t)1ULL << dict_log2;
+    const size_t needed_ram = (size_t)(256ULL * 1024ULL * 1024ULL) + dict_sz * 8;
+    const size_t available_ram = get_available_ram();
+    const size_t rlimit_as = get_rlimit_as_bytes();
+    if ((available_ram != (size_t)-1 && needed_ram > available_ram) ||
+        (rlimit_as != (size_t)-1 && needed_ram > rlimit_as)) {
+      const double need_gb = (double)needed_ram / (1024.0 * 1024.0 * 1024.0);
+      const double avail_gb = (available_ram == (size_t)-1)
+                                  ? -1.0
+                                  : (double)available_ram /
+                                        (1024.0 * 1024.0 * 1024.0);
+      const double lim_gb = (rlimit_as == (size_t)-1)
+                                ? -1.0
+                                : (double)rlimit_as /
+                                      (1024.0 * 1024.0 * 1024.0);
+      stop_progress(8);
+      progress_clear_line();
+      if (avail_gb >= 0.0 && lim_gb >= 0.0) {
+        printf("\n[%s%s%s] Error: LZHAM needs ~ %.2f Gb of RAM "
+               "(dict=2^%u), %.2f Gb available, RLIMIT_AS=%.2f Gb, aborted.\n",
+               PK_ERR, PK_SYM_ERR, PK_RES, need_gb, dict_log2, avail_gb, lim_gb);
+      } else if (avail_gb >= 0.0) {
+        printf("\n[%s%s%s] Error: LZHAM needs ~ %.2f Gb of RAM "
+               "(dict=2^%u), %.2f Gb available, aborted.\n",
+               PK_ERR, PK_SYM_ERR, PK_RES, need_gb, dict_log2, avail_gb);
+      } else if (lim_gb >= 0.0) {
+        printf("\n[%s%s%s] Error: LZHAM needs ~ %.2f Gb of RAM "
+               "(dict=2^%u), RLIMIT_AS=%.2f Gb, aborted.\n",
+               PK_ERR, PK_SYM_ERR, PK_RES, need_gb, dict_log2, lim_gb);
+      } else {
+        printf("\n[%s%s%s] Error: LZHAM needs ~ %.2f Gb of RAM "
+               "(dict=2^%u), aborted.\n",
+               PK_ERR, PK_SYM_ERR, PK_RES, need_gb, dict_log2);
+      }
+      return 1;
+    }
+
     size_t max_out_len = size_to_compress + 4096;
     unsigned char *out = (unsigned char *)malloc(max_out_len);
     if (!out) {
@@ -959,7 +1012,7 @@ int compress_data_with_codec(const char *codec, const unsigned char *input,
     uint32_t adler = 0;
     // Use dict_size_log2=29 (512MB)
     lzham_compress_status_t status = lzhamc_compress_memory(
-        29, comp_input, size_to_compress, out, &out_len, &adler);
+        dict_log2, comp_input, size_to_compress, out, &out_len, &adler);
     update_progress(100, 8);
     stop_progress(8);
     progress_clear_line();

@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -43,14 +44,13 @@
 
 #include "../others/help_colors.h"
 
-// UCL for stage0 analysis
-#include <ucl/ucl.h>
 // Hardcoded offsets for generated header to avoid include path issues
 #ifndef STAGE0_HDR_ULEN_OFF
 #define STAGE0_HDR_ULEN_OFF 0x4a
 #define STAGE0_HDR_CLEN_OFF 0x4e
 #define STAGE0_HDR_DST_OFF 0x52
 #define STAGE0_HDR_BLOB_OFF 0x5a
+#define STAGE0_HDR_FLAGS_OFF 0x62
 #endif
 
 // Params Block Magic: +zELF-PR
@@ -193,13 +193,9 @@ static int find_elfz_params(const unsigned char *data, size_t size,
   return 0;
 }
 
- static int find_payload_marker_offset_from_first(const unsigned char *data,
-                                                  size_t size, size_t start,
-                                                  size_t *payload_offset);
-
- static int find_payload_marker_offset_from_last(const unsigned char *data,
-                                                 size_t size, size_t start,
-                                                 size_t *payload_offset);
+ static int find_payload_marker_offset_best(const unsigned char *data,
+                                            size_t size, size_t start,
+                                            size_t *payload_offset);
 
 static int find_payload_marker_offset(const unsigned char *data, size_t size,
                                       size_t *payload_offset) {
@@ -210,25 +206,31 @@ static int find_payload_marker_offset(const unsigned char *data, size_t size,
 
   size_t pt_load_end_off = 0;
   if (elf_pt_load_end_offset(data, size, &pt_load_end_off)) {
-    if (find_payload_marker_offset_from_first(data, size, pt_load_end_off,
-                                              payload_offset))
+    if (find_payload_marker_offset_best(data, size, pt_load_end_off,
+                                        payload_offset))
       return 1;
-    return find_payload_marker_offset_from_last(data, size, 0, payload_offset);
+    return find_payload_marker_offset_best(data, size, 0, payload_offset);
   }
 
   // Fallback to whole-file scan
-  return find_payload_marker_offset_from_last(data, size, 0, payload_offset);
+  return find_payload_marker_offset_best(data, size, 0, payload_offset);
 }
 
-static int find_payload_marker_offset_from_first(const unsigned char *data,
-                                                 size_t size, size_t start,
-                                                 size_t *payload_offset) {
+static int find_payload_marker_offset_best(const unsigned char *data,
+                                           size_t size, size_t start,
+                                           size_t *payload_offset) {
   if (!data || !payload_offset)
     return 0;
   if (size < 32)
     return 0;
   if (start >= size)
     return 0;
+
+  // Select the marker candidate whose compressed block end is closest to EOF.
+  // This avoids false positives when the marker bytes occur inside compressed
+  // payload data or inside embedded stubs.
+  size_t best_off = (size_t)-1;
+  size_t best_tail = (size_t)-1;
 
   for (size_t i = start; i + 26 <= size; i++) {
     if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
@@ -239,7 +241,6 @@ static int find_payload_marker_offset_from_first(const unsigned char *data,
           const unsigned char *p = data + i + 6;
           size_t orig_size = load_size(p);
           p += 8;
-          uint64_t entry_offset = load_u64(p);
           p += 8;
           int comp_size = (int)load_s32(p);
 
@@ -247,67 +248,28 @@ static int find_payload_marker_offset_from_first(const unsigned char *data,
             continue;
           if (orig_size > (size_t)(1024u * 1024u * 1024u))
             continue;
-          if (entry_offset >= (uint64_t)orig_size)
-            continue;
           if (comp_size <= 0)
             continue;
           size_t remaining = size - i;
           if ((size_t)comp_size > remaining - 26)
             continue;
 
-          *payload_offset = i;
-          return 1;
+          size_t tail = remaining - 26 - (size_t)comp_size;
+          if (tail < best_tail) {
+            best_tail = tail;
+            best_off = i;
+            if (tail == 0) {
+              *payload_offset = best_off;
+              return 1;
+            }
+          }
         }
       }
     }
   }
-  return 0;
-}
-
-static int find_payload_marker_offset_from_last(const unsigned char *data,
-                                                size_t size, size_t start,
-                                                size_t *payload_offset) {
-  if (!data || !payload_offset)
+  if (best_off == (size_t)-1)
     return 0;
-  if (size < 32)
-    return 0;
-  if (start >= size)
-    return 0;
-
-  size_t best = (size_t)-1;
-  for (size_t i = start; i + 26 <= size; i++) {
-    if (data[i] == 'z' && data[i + 1] == 'E' && data[i + 2] == 'L' &&
-        data[i + 3] == 'F') {
-      for (int k = 0; elfz_marker_suffixes[k] != NULL; k++) {
-        if (data[i + 4] == (unsigned char)elfz_marker_suffixes[k][0] &&
-            data[i + 5] == (unsigned char)elfz_marker_suffixes[k][1]) {
-          const unsigned char *p = data + i + 6;
-          size_t orig_size = load_size(p);
-          p += 8;
-          uint64_t entry_offset = load_u64(p);
-          p += 8;
-          int comp_size = (int)load_s32(p);
-
-          if (orig_size == 0)
-            continue;
-          if (orig_size > (size_t)(1024u * 1024u * 1024u))
-            continue;
-          if (entry_offset >= (uint64_t)orig_size)
-            continue;
-          if (comp_size <= 0)
-            continue;
-          size_t remaining = size - i;
-          if ((size_t)comp_size > remaining - 26)
-            continue;
-
-          best = i;
-        }
-      }
-    }
-  }
-  if (best == (size_t)-1)
-    return 0;
-  *payload_offset = best;
+  *payload_offset = best_off;
   return 1;
 }
 
@@ -339,256 +301,67 @@ static int vaddr_to_offset(const unsigned char *data, size_t size,
   return 0;
 }
 
-// Detect if the stub is a Kanzi filter variant by scanning for Kanzi-specific
-// code patterns. The Kanzi transform uses XOR with 0xF0F0F0F0 which produces
-// unique instruction sequences that don't appear in BCJ stubs:
-// - XOR EAX, 0xF0F0F0F0: 0x35 0xF0 0xF0 0xF0 0xF0 (5 bytes)
-// - XOR r32, 0xF0F0F0F0: 0x81 0xF? 0xF0 0xF0 0xF0 0xF0 (6 bytes)
 static int is_kanzi_stub(const unsigned char *data, size_t size) {
-  if (size < sizeof(Elf64_Ehdr))
+  if (!data || size < sizeof(Elf64_Ehdr))
     return 0;
   const Elf64_Ehdr *ehdr = (const Elf64_Ehdr *)data;
 
   if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0)
     return 0;
 
-  if (ehdr->e_phoff + ehdr->e_phnum * ehdr->e_phentsize > size)
-    return 0;
-
-  const Elf64_Phdr *phdr = (const Elf64_Phdr *)(data + ehdr->e_phoff);
-
-  // Find first PT_LOAD segment (contains stub code)
-  for (int i = 0; i < ehdr->e_phnum; i++) {
-    if (phdr[i].p_type == PT_LOAD && (phdr[i].p_flags & PF_X)) {
-      size_t off = phdr[i].p_offset;
-      size_t len = phdr[i].p_filesz;
-      if (off + len > size)
-        continue;
-
-      const unsigned char *stub = data + off;
-      // Scan for Kanzi-specific XOR instruction with 0xF0F0F0F0 mask:
-      // This is a 5-6 byte sequence that is extremely unlikely to appear
-      // in BCJ code, making detection reliable.
-      for (size_t j = 0; j + 5 < len; j++) {
-        // XOR EAX, 0xF0F0F0F0: 35 F0 F0 F0 F0
-        if (stub[j] == 0x35 && stub[j + 1] == 0xF0 && stub[j + 2] == 0xF0 &&
-            stub[j + 3] == 0xF0 && stub[j + 4] == 0xF0)
-          return 1;
-        // XOR r32, 0xF0F0F0F0: 81 F? F0 F0 F0 F0 (where F? is F0-F7)
-        if (j + 6 < len && stub[j] == 0x81 && (stub[j + 1] & 0xF8) == 0xF0 &&
-            stub[j + 2] == 0xF0 && stub[j + 3] == 0xF0 && stub[j + 4] == 0xF0 &&
-            stub[j + 5] == 0xF0)
-          return 1;
-        // REX.W XOR r64, 0xF0F0F0F0: 48 35 F0 F0 F0 F0 or 48 81 F? ...
-        if (stub[j] == 0x48 && stub[j + 1] == 0x35 && stub[j + 2] == 0xF0 &&
-            stub[j + 3] == 0xF0 && stub[j + 4] == 0xF0 && stub[j + 5] == 0xF0)
-          return 1;
-      }
+  for (size_t j = 0; j + 5 < size; j++) {
+    if (data[j] == 0x35 && data[j + 1] == 0xF0 && data[j + 2] == 0xF0 &&
+        data[j + 3] == 0xF0 && data[j + 4] == 0xF0) {
+      return 1;
+    }
+    if (j + 6 < size && data[j] == 0x81 && (data[j + 1] & 0xF8) == 0xF0 &&
+        data[j + 2] == 0xF0 && data[j + 3] == 0xF0 && data[j + 4] == 0xF0 &&
+        data[j + 5] == 0xF0) {
+      return 1;
+    }
+    if (data[j] == 0x48 && data[j + 1] == 0x35 && data[j + 2] == 0xF0 &&
+        data[j + 3] == 0xF0 && data[j + 4] == 0xF0 && data[j + 5] == 0xF0) {
+      return 1;
     }
   }
   return 0;
 }
 
-// Minimal NRV2B LE32 decompressor (trimmed from UCL n2b_d.c + getbit.h)
-// Embedded here to avoid dependency on ucl headers/libs which might be missing
-// or mismatched.
-// Typedefs removed as they are provided by <ucl/ucl.h>
-
-#define getbit_le32(bb, bc, src, ilen, src_len, input_err)                     \
-  ((bc) > 0 ? (((bb) >> --(bc)) & 1u)                                          \
-            : (((ilen) + 4u > (src_len))                                       \
-                   ? ((input_err) = UCL_E_INPUT_OVERRUN, 0u)                   \
-                   : ((bc) = 31u,                                              \
-                      (bb) = (uint32_t)(src)[(ilen)] +                         \
-                             ((uint32_t)(src)[(ilen) + 1] << 8) +              \
-                             ((uint32_t)(src)[(ilen) + 2] << 16) +             \
-                             ((uint32_t)(src)[(ilen) + 3] << 24),              \
-                      (ilen) += 4u, (((bb) >> 31) & 1u))))
-
-static int embedded_nrv2b_decompress_le32(const ucl_byte *src, ucl_uint src_len,
-                                          ucl_byte *dst, ucl_uintp dst_len) {
-  uint32_t bb = 0;
-  uint32_t bc = 0;
-  ucl_uint ilen = 0, olen = 0, last_m_off = 1;
-  const ucl_uint oend = *dst_len;
-  int input_err = UCL_E_OK;
-
-  for (;;) {
-    ucl_uint m_off, m_len;
-
-    while (getbit_le32(bb, bc, src, ilen, src_len, input_err)) {
-      if (input_err != UCL_E_OK)
-        return input_err;
-      if (olen >= oend)
-        return UCL_E_OUTPUT_OVERRUN;
-      dst[olen++] = src[ilen++];
-    }
-    m_off = 1;
-    do {
-      m_off = (m_off * 2u) + getbit_le32(bb, bc, src, ilen, src_len, input_err);
-      if (input_err != UCL_E_OK)
-        return input_err;
-      if (m_off > UCL_UINT32_C(0xffffff) + 3)
-        return UCL_E_LOOKBEHIND_OVERRUN;
-    } while (!getbit_le32(bb, bc, src, ilen, src_len, input_err));
-    if (input_err != UCL_E_OK)
-      return input_err;
-    if (m_off == 2) {
-      m_off = last_m_off;
-    } else {
-      if (ilen >= src_len)
-        return UCL_E_INPUT_OVERRUN;
-      m_off = (m_off - 3u) * 256u + src[ilen++];
-      if (m_off == UCL_UINT32_C(0xffffffff))
-        break;
-      last_m_off = ++m_off;
-    }
-    m_len = getbit_le32(bb, bc, src, ilen, src_len, input_err);
-    if (input_err != UCL_E_OK)
-      return input_err;
-    m_len = (m_len * 2u) + getbit_le32(bb, bc, src, ilen, src_len, input_err);
-    if (input_err != UCL_E_OK)
-      return input_err;
-    if (m_len == 0) {
-      m_len++;
-      do {
-        m_len =
-            (m_len * 2u) + getbit_le32(bb, bc, src, ilen, src_len, input_err);
-        if (input_err != UCL_E_OK)
-          return input_err;
-        if (m_len >= oend)
-          return UCL_E_OUTPUT_OVERRUN;
-      } while (!getbit_le32(bb, bc, src, ilen, src_len, input_err));
-      if (input_err != UCL_E_OK)
-        return input_err;
-      m_len += 2;
-    }
-    m_len += (m_off > 0xd00u);
-    if (olen + m_len > oend)
-      return UCL_E_OUTPUT_OVERRUN;
-    if (m_off > olen)
-      return UCL_E_LOOKBEHIND_OVERRUN;
-    {
-      const ucl_byte *m_pos = dst + olen - m_off;
-      dst[olen++] = *m_pos++;
-      do
-        dst[olen++] = *m_pos++;
-      while (--m_len > 0);
-    }
-  }
-  *dst_len = olen;
-  return (ilen == src_len) ? UCL_E_OK
-                           : (ilen < src_len ? -205 /*UCL_E_INPUT_NOT_CONSUMED*/
-                                             : UCL_E_INPUT_OVERRUN);
-}
-
-// Helper to decompress stage0 stub and check for hidden flags (BCJ/Kanzi)
-// Returns 1 if inner stub was analyzed (updating flags), 0 otherwise.
-static int analyze_stage0_stub(const unsigned char *data, size_t size,
-                               int *out_is_bcj, int *out_is_kanzi) {
+static int stage0_read_flags(const unsigned char *data, size_t size,
+                             uint8_t *out_flags) {
+  if (!data || !out_flags)
+    return 0;
   if (size < sizeof(Elf64_Ehdr))
     return 0;
+
   const Elf64_Ehdr *ehdr = (const Elf64_Ehdr *)data;
-
-  // Use entry point to locate the stage0 stub code.
-  size_t entry_offset = 0;
-  if (!vaddr_to_offset(data, size, ehdr->e_entry, &entry_offset)) {
-    printf(
-        "[%s%s%s] Stage0 Analysis: vaddr_to_offset failed for e_entry=0x%lx\n",
-        PK_INFO, PK_SYM_INFO, PK_RES, ehdr->e_entry);
+  size_t entry_off = 0;
+  if (!vaddr_to_offset(data, size, ehdr->e_entry, &entry_off))
     return 0;
-  }
-
-  const unsigned char *stub = data + entry_offset;
-  size_t available = size - entry_offset;
-
-  printf("[%s%s%s] Stage0 Analysis: e_entry=0x%lx -> offset=0x%zx, "
-         "available=%zu\n",
-         PK_INFO, PK_SYM_INFO, PK_RES, ehdr->e_entry, entry_offset, available);
-  printf("[%s%s%s] Stage0 Stub Bytes: %02x %02x %02x %02x\n", PK_INFO,
-         PK_SYM_INFO, PK_RES, stub[0], stub[1], stub[2], stub[3]);
-
-  // Read stage0 header
-  if (available < 64) {
-    printf("[%s%s%s] Stage0 Analysis: too small (<64)\n", PK_INFO, PK_SYM_INFO,
-           PK_RES);
+  if (entry_off >= size)
     return 0;
-  }
+
+  const unsigned char *stub = data + entry_off;
+  size_t available = size - entry_off;
+  if (available <= (size_t)STAGE0_HDR_FLAGS_OFF)
+    return 0;
 
   uint32_t ulen = load_u32(stub + STAGE0_HDR_ULEN_OFF);
   uint32_t clen = load_u32(stub + STAGE0_HDR_CLEN_OFF);
   uint64_t blob_off = load_u64(stub + STAGE0_HDR_BLOB_OFF);
 
-  printf("[%s%s%s] Stage0 Header: ulen=%u, clen=%u, blob_off=0x%lx\n", PK_INFO,
-         PK_SYM_INFO, PK_RES, ulen, clen, blob_off);
-
-  // Sanity checks
-  if (ulen > 1024 * 1024 || clen > available || blob_off + clen > available) {
-    printf("[%s%s%s] Stage0 Analysis: Header sanity check failed\n", PK_INFO,
-           PK_SYM_INFO, PK_RES);
-    return 0; // Invalid stage0 header
-  }
-
-  // Decompress inner stub
-  unsigned char *inner_stub = malloc(ulen + 64);
-  if (!inner_stub)
+  if (ulen == 0 || ulen > (uint32_t)(1024u * 1024u))
+    return 0;
+  if (clen == 0)
+    return 0;
+  if (blob_off > (uint64_t)available)
+    return 0;
+  if ((uint64_t)clen > (uint64_t)available)
+    return 0;
+  if (blob_off + (uint64_t)clen > (uint64_t)available)
     return 0;
 
-  ucl_uint dest_len = ulen;
-  int r = embedded_nrv2b_decompress_le32(stub + blob_off, clen, inner_stub,
-                                         &dest_len);
-  printf("[%s%s%s] Stage0 Decompression: ret=%d, dest_len=%u (cap=%u)\n",
-         PK_INFO, PK_SYM_INFO, PK_RES, r, dest_len, ulen);
-
-  if (r != UCL_E_OK) {
-    free(inner_stub);
-    return 0; // Decompression failed
-  }
-
-  // Scan inner stub for Params and Kanzi signature
-  elfz_params_t inner_params;
-  int p_found = find_elfz_params(inner_stub, dest_len, &inner_params);
-  if (p_found) {
-    // Update flags
-    int flags = (int)((inner_params.version >> 8) & 0xFF);
-    *out_is_bcj = flags & 1; // Bit 0 = BCJ
-    printf("[%s%s%s] Stage0 inner stub: Params found, Flags=0x%x (BCJ=%d)\n",
-           PK_INFO, PK_SYM_INFO, PK_RES, flags, *out_is_bcj);
-  }
-
-  // Check for Kanzi signature in inner stub
-  // Raw scan avoids issues if inner stub has incomplete/stripped ELF headers
-  for (size_t j = 0; j + 5 < dest_len; j++) {
-    // XOR EAX, 0xF0F0F0F0: 35 F0 F0 F0 F0
-    if (inner_stub[j] == 0x35 && inner_stub[j + 1] == 0xF0 &&
-        inner_stub[j + 2] == 0xF0 && inner_stub[j + 3] == 0xF0 &&
-        inner_stub[j + 4] == 0xF0) {
-      *out_is_kanzi = 1;
-      break;
-    }
-    // XOR r32, 0xF0F0F0F0
-    if (j + 6 < dest_len && inner_stub[j] == 0x81 &&
-        (inner_stub[j + 1] & 0xF8) == 0xF0 && inner_stub[j + 2] == 0xF0 &&
-        inner_stub[j + 3] == 0xF0 && inner_stub[j + 4] == 0xF0 &&
-        inner_stub[j + 5] == 0xF0) {
-      *out_is_kanzi = 1;
-      break;
-    }
-    // REX.W XOR r64, 0xF0F0F0F0
-    if (inner_stub[j] == 0x48 && inner_stub[j + 1] == 0x35 &&
-        inner_stub[j + 2] == 0xF0 && inner_stub[j + 3] == 0xF0 &&
-        inner_stub[j + 4] == 0xF0 && inner_stub[j + 5] == 0xF0) {
-      *out_is_kanzi = 1;
-      break;
-    }
-  }
-
-  if (*out_is_kanzi) {
-    printf("[%s%s%s] Stage0 inner stub: Kanzi signature detected\n", PK_INFO,
-           PK_SYM_INFO, PK_RES);
-  }
-
-  free(inner_stub);
+  *out_flags = stub[STAGE0_HDR_FLAGS_OFF];
   return 1;
 }
 
@@ -765,18 +538,6 @@ int elfz_depack(const char *input_path, const char *output_path) {
     codec_name = "Zstd";
     is_legacy_layout = 1; // Zstd keeps legacy layout (no filtered_size), but
                           // may store a BCJ flag
-    // New layout: after comp_size, an extra int bcj_flag is stored, then the
-    // Zstd frame starts. Backward compatible: if the Zstd magic is found
-    // immediately, assume old layout.
-    if ((size_t)(p - payload) + 4 <= remaining) {
-      const unsigned char *m = (const unsigned char *)p;
-      if (!(m[0] == 0x28 && m[1] == 0xB5 && m[2] == 0x2F && m[3] == 0xFD)) {
-        is_bcj_flag = (int)load_s32(p);
-        p += 4;
-      } else {
-        // Old zstd legacy layout: BCJ must be inferred from params/heuristics
-      }
-    }
   } else if (strcmp(marker, "zELFde") == 0) {
     codec_name = "Density";
     is_legacy_layout = 1; // Density uses legacy layout like ZSTD
@@ -809,6 +570,27 @@ int elfz_depack(const char *input_path, const char *output_path) {
   printf("[%s%s%s] Initial Kanzi Stub Detection: %d\n", PK_INFO, PK_SYM_INFO,
          PK_RES, is_kanzi);
 
+  // Stage0 wrapper: for Zstd (all) and Density (dynamic only), the wrapper
+  // carries an explicit filter flags byte. Use it instead of any heuristics.
+  {
+    int is_density = (strcmp(codec_name, "Density") == 0);
+    int is_zstd = (strcmp(codec_name, "Zstd") == 0);
+    int allow_stage0 = 0;
+    const Elf64_Ehdr *eh = (const Elf64_Ehdr *)data;
+    if (is_zstd)
+      allow_stage0 = 1;
+    else if (is_density && eh->e_type == ET_DYN)
+      allow_stage0 = 1;
+
+    if (allow_stage0) {
+      uint8_t s0_flags = 0;
+      if (stage0_read_flags(data, size, &s0_flags)) {
+        is_bcj_flag = (s0_flags & 1u) ? 1 : 0;
+        is_kanzi = (s0_flags & 2u) ? 1 : 0;
+      }
+    }
+  }
+
   // If params missing, default to legacy layout.
   // Modern layout (with filtered_size) is only used for Kanzi filter.
   // BCJ/None filters always use legacy layout.
@@ -821,37 +603,6 @@ int elfz_depack(const char *input_path, const char *output_path) {
   } else if (!is_kanzi) {
     // Not a Kanzi stub (None filter uses BCJ stub), use legacy layout
     is_legacy_layout = 1;
-
-    // If no filter detected yet, but codec uses stage0 (ZSTD, Density),
-    // try to unpack stage0 to find hidden filters in inner stub.
-    // Density only uses stage0 for Dynamic binaries (ET_DYN).
-    int is_density = (strcmp(codec_name, "Density") == 0);
-    int is_zstd = (strcmp(codec_name, "Zstd") == 0);
-    int check_stage0 = 0;
-    const Elf64_Ehdr *ehdr = (const Elf64_Ehdr *)data;
-
-    if (!is_bcj_flag && !is_kanzi) {
-      if (is_zstd)
-        check_stage0 = 1;
-      else if (is_density && ehdr->e_type == ET_DYN)
-        check_stage0 = 1;
-    }
-
-    if (check_stage0) {
-      printf("[%s%s%s] Attempting Stage0 Analysis for %s...\n", PK_INFO,
-             PK_SYM_INFO, PK_RES, codec_name);
-      if (analyze_stage0_stub(data, size, &is_bcj_flag, &is_kanzi)) {
-        printf("[%s%s%s] Hidden BCJ filter detected in Stage0 stub\n", PK_INFO,
-               PK_SYM_INFO, PK_RES);
-        printf("[%s%s%s] Hidden Kanzi filter detected in Stage0 stub\n",
-               PK_INFO, PK_SYM_INFO, PK_RES);
-        printf("[%s%s%s] Stage0 Analysis Result: BCJ=%d, Kanzi=%d\n", PK_INFO,
-               PK_SYM_INFO, PK_RES, is_bcj_flag, is_kanzi);
-      } else {
-        printf("[%s%s%s] Stage0 Analysis Failed (no valid stage0 found)\n",
-               PK_INFO, PK_SYM_INFO, PK_RES);
-      }
-    }
   }
 
   size_t filtered_size = orig_size; // Default if not present
