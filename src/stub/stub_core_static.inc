@@ -281,31 +281,6 @@ static void stub_main_common(unsigned long *original_sp, uint64_t saved_rdx_kern
     }
 
     int is_pie = (ehdr_tmp->e_type == 3);
-    
-    // Fast-path ET_EXEC (ZSTD-only): memfd+execveat
-#if defined(CODEC_ZSTD)
-    if (!is_pie) {
-        int fd = (int)z_syscall_memfd_create("zELF", 0x0001 /* MFD_CLOEXEC */);
-        if (fd >= 0) {
-            const char *p = (const char *)combined_data;
-            size_t left = original_size;
-            while (left > 0) {
-                size_t chunk = left > (size_t)(1<<20) ? (size_t)(1<<20) : left;
-                long w = z_syscall_write(fd, p, chunk);
-                if (w <= 0) break;
-                p += (size_t)w;
-                left -= (size_t)w;
-            }
-            if (left == 0) {
-                int argc = *(original_sp);
-                char **argv = (char **)(original_sp + 1);
-                char **envp = argv + argc + 1;
-                (void)z_syscall_execveat(fd, "", argv, envp, 0x1000 /* AT_EMPTY_PATH */);
-            }
-            (void)z_syscall_close(fd);
-        }
-    }
-#endif
 
     uint64_t total_size = 0;
     if (SEGMENT_COUNT == 0) {

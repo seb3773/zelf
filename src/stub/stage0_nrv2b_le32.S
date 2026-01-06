@@ -51,6 +51,7 @@ stage0_fail:
     .global stage0_hdr_clen
     .global stage0_hdr_dst
     .global stage0_hdr_blob
+    .global stage0_hdr_flags
 stage0_hdr_ulen:
 0:  .long 0              // ulen (patched by packer)
 stage0_hdr_clen:
@@ -59,7 +60,7 @@ stage0_hdr_dst:
 8:  .quad 0              // dst_off (patched by packer)
 stage0_hdr_blob:
 16: .quad 0              // blob_off (patched by packer)
-24:
+stage0_hdr_flags:
+24: .byte 0              // flags (patched by packer)
+25:
     .size stage0_nrv2b_entry, .-stage0_nrv2b_entry
-
-

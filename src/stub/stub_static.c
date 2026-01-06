@@ -401,29 +401,6 @@ static void stub_main_common(unsigned long *original_sp,
   // PIE path: read segments from the decompressed ELF
   // If SEGMENT_COUNT==0, extract directly from ELF
 
-  // Fast-path ET_EXEC (ZSTD-only)
-#if defined(CODEC_ZSTD)
-  if (!is_pie) {
-    int fd = (int)z_syscall_memfd_create("zELF", MFD_CLOEXEC);
-    if (fd >= 0) {
-      const char *p = (const char *)combined_data;
-      size_t left = original_size;
-      while (left > 0) {
-        size_t chunk = left > (size_t)(1 << 20) ? (size_t)(1 << 20) : left;
-        long w = z_syscall_write(fd, p, chunk);
-        if (w <= 0)
-          break;
-        p += (size_t)w;
-        left -= (size_t)w;
-      }
-      if (left == 0) {
-        (void)z_syscall_execveat(fd, "", argv, envp, AT_EMPTY_PATH);
-      }
-      (void)z_syscall_close(fd);
-    }
-  }
-#endif
-
   uint64_t total_size = 0;
   if (SEGMENT_COUNT == 0) {
     Elf64_Ehdr *elf_hdr = (Elf64_Ehdr *)combined_data;
