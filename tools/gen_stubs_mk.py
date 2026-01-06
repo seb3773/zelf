@@ -177,16 +177,11 @@ VARIANTS = {
 
 MODES = {
     'dynamic': {
-        'core_src': 'src/stub/stub_dynamic.c', # Base source, will be suffixed _bcj in some cases in original makefile but here we control defines
-        # Actually original makefile used stub_dynamic_bcj.c for BCJ. Let's see if we can unify.
-        # stub_dynamic_bcj.c is likely just stub_dynamic.c with some defines or small changes.
-        # Let's check if we can just use defines.
-        # Reading stub_main_dynamic.c, it uses ELFZ_FILTER_BCJ.
-        # So we probably just need stub_dynamic.c for all, assuming stub_dynamic_bcj.c was just a wrapper or if we pass the define.
-        # But wait, makefile explicitly used src/stub/stub_dynamic_bcj.c.
-        # If stub_dynamic.c includes stub_main_dynamic.c, and stub_dynamic_bcj.c also includes it (or similar),
-        # then passing -DELFZ_FILTER_BCJ to stub_dynamic.c should work IF stub_dynamic.c supports it.
-        # Let's assume for now we replicate the filename logic to be safe.
+        'core_src': 'src/stub/stub_dynamic.c',
+        'extra_objs': ['src/stub/mini_mem.S']
+    },
+    'dynexec': {
+        'core_src': 'src/stub/stub_dynexec.c',
         'extra_objs': ['src/stub/mini_mem.S']
     },
     'static': {
