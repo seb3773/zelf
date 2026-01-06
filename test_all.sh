@@ -19,12 +19,14 @@ last_ratio = r[0]
 next
 }
 /OK|FAILED/ {
+if ($0 !~ /BINARY TEST/ && $0 !~ /ARCHIVE MODE/) next
 if ($0 ~ /UNPACKED/) {
 # Pas de ratio pour les tests UNPACKED
 print
 } else if (last_ratio != "") {
 sub(/OK|FAILED/, "(" last_ratio ") &")
 print
+last_ratio = ""
 } else {
 print
 }
