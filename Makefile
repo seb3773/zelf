@@ -466,7 +466,7 @@ $(STAGE0_BIN): $(STAGE0_ELF)
 
 $(STAGE0_OFFSETS): $(STAGE0_ELF)
 	@printf "\033[37;44m❯ Export stage0 header offsets...\033[0m\n"
-	@nm -S $< | perl -ne 'BEGIN{$$b=$$u=$$c=$$d=$$bo=undef;} if(/stage0_nrv2b_entry/){($$a)=split; $$b=hex($$a);} if(/stage0_hdr_ulen/){($$a)=split; $$u=hex($$a);} if(/stage0_hdr_clen/){($$a)=split; $$c=hex($$a);} if(/stage0_hdr_dst/){($$a)=split; $$d=hex($$a);} if(/stage0_hdr_blob/){($$a)=split; $$bo=hex($$a);} END{die "stage0_nrv2b_entry not found\n" unless defined $$b; print "#define STAGE0_HDR_ULEN_OFF 0x", sprintf("%x",$$u-$$b), "\n"; print "#define STAGE0_HDR_CLEN_OFF 0x", sprintf("%x",$$c-$$b), "\n"; print "#define STAGE0_HDR_DST_OFF  0x", sprintf("%x",$$d-$$b), "\n"; print "#define STAGE0_HDR_BLOB_OFF 0x", sprintf("%x",$$bo-$$b), "\n";}' > $@
+	@nm -S $< | perl -ne 'BEGIN{$$b=$$u=$$c=$$d=$$bo=$$f=undef;} if(/stage0_nrv2b_entry/){($$a)=split; $$b=hex($$a);} if(/stage0_hdr_ulen/){($$a)=split; $$u=hex($$a);} if(/stage0_hdr_clen/){($$a)=split; $$c=hex($$a);} if(/stage0_hdr_dst/){($$a)=split; $$d=hex($$a);} if(/stage0_hdr_blob/){($$a)=split; $$bo=hex($$a);} if(/stage0_hdr_flags/){($$a)=split; $$f=hex($$a);} END{die "stage0_nrv2b_entry not found\n" unless defined $$b; print "#define STAGE0_HDR_ULEN_OFF 0x", sprintf("%x",$$u-$$b), "\n"; print "#define STAGE0_HDR_CLEN_OFF 0x", sprintf("%x",$$c-$$b), "\n"; print "#define STAGE0_HDR_DST_OFF  0x", sprintf("%x",$$d-$$b), "\n"; print "#define STAGE0_HDR_BLOB_OFF 0x", sprintf("%x",$$bo-$$b), "\n"; print "#define STAGE0_HDR_FLAGS_OFF 0x", sprintf("%x",$$f-$$b), "\n";}' > $@
 
 $(STAGE0_EMBED_O): $(STAGE0_BIN) | $(BUILD_DIR)
 	@printf "\033[37;44m→→ Embedding stage0 bin...\033[0m\n"

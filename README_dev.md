@@ -60,6 +60,9 @@ ELFZ/
 │   │   ├── start.S              # ASM entry point (_start)
 │   │   ├── stub_static.c        # Static-binary logic
 │   │   ├── stub_dynamic.c       # PIE/Dynamic logic
+│   │   ├── stub_dynexec.c        # Dynexec logic (ET_EXEC-style loader)
+│   │   ├── stub_dynexec_bcj.c    # Dynexec BCJ wrapper
+│   │   ├── stub_core_dynexec.inc # Dynexec shared core (included by dynexec variants)
 │   │   ├── stub_syscalls.h      # Inline syscall wrappers
 │   │   ├── stub_loader.h        # ld.so loading (dynamic)
 │   │   ├── stub_reloc.h         # Runtime relocation
@@ -100,7 +103,7 @@ Linux syscalls are invoked with inline assembly (`asm volatile "syscall"`).
 1. **_start (ASM)**: Save all registers (kernel initial context) on the stack. Call `loader_main`.
 2. **Locate payload**:
    - *Static*: absolute addresses patched in `.rodata`.
-   - *PIE*: scan memory near `_start` for the 6-byte codec marker (e.g., `zELFl4` for LZ4). For **ZSTD only**, a more robust scan may use `/proc/self/maps` to scan the full VMA.
+   - *PIE / Dynexec*: scan memory near `_start` for the 6-byte codec marker (e.g., `zELFl4` for LZ4). For **ZSTD/Density stage0-wrapped stubs**, the scan is VMA-bounded and may scan backward then forward within the mapping (via `/proc/self/maps`) because the packed data can be at lower addresses than where the decompressed stub runs.
 3. **Mapping**: `mmap` an anonymous region for the decompressed binary.
 4. **Decompression**: Call the codec-specific decompressor (inline via `codec_select.h`).
 5. **Unfilter**: Reverse BCJ or KanziEXE.
@@ -110,6 +113,8 @@ Linux syscalls are invoked with inline assembly (`asm volatile "syscall"`).
    - Patch GOT/PLT if needed.
    - Load the dynamic interpreter (`ld-linux-x86-64.so`) if the original was dynamic.
 8. **Handoff**: Restore stack, patch AUXV so libc/ld.so believe they are launching the original binary, and jump to the original entry point.
+
+Important: for dynamic binaries, recent `ld-linux`/glibc may be stricter about AUXV coherence. The dynamic stub updates AUXV entries so that `AT_PHDR` and `AT_ENTRY` match the decompressed in-memory ELF mapping.
 
 ---
 
@@ -443,6 +448,22 @@ Build is driven by the root `Makefile` plus a Python generator for stubs.
 - **Compilers**: `gcc`, `g++`.
 - **Tools**: `make`, `nasm` (for some asm decompressors), `python3`.
 - **Libraries (dev)**: `liblz4-dev`, `libzstd-dev`, `zlib1g-dev` (host packer).
+
+### openSUSE support
+Dependency installation is handled by `make install_dependencies`, implemented by `tools/install_dependencies.sh`.
+
+### Stub PIE policy (`-fpie`)
+Some toolchains may emit absolute-addressing sequences in stub code when not compiling as PIE. Since stubs are embedded as raw binary blobs (no relocations available at runtime), this can crash when mapped at a randomized base.
+
+The Makefile exposes a knob:
+- `make STUB_FORCE_PIE=1` forces `-fpie` for stubs.
+- `make STUB_FORCE_PIE=0` disables it.
+- `make STUB_FORCE_PIE=auto` (default) enables it for toolchains that require it.
+
+Note: enabling PIE for stubs can slightly increase stub size (typically a few hundred bytes). For the smallest stubs, building on Debian remains preferable.
+
+### LZHAM memory preflight
+The packer keeps LZHAM compression settings unchanged (dict size `2^29`), but performs a preflight check against `MemAvailable` and `RLIMIT_AS` and aborts with an explicit error message when memory is insufficient.
 
 ---
 

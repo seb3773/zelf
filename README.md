@@ -19,6 +19,7 @@ zELF is an ELF64 packer for Linux x86_64, inspired by UPX but with a modular str
 
 ## Platform and limits
 - Targets Linux x86_64, ELF64 only. ELF 32-bit is not supported.
+- Some codecs may require very large amounts of memory during compression. In particular, `-lzham` uses a 512MB dictionary and will abort early with an explicit error message if available RAM (or `RLIMIT_AS`) is insufficient.
 - Please note that zELF is not designed for code obfuscation or concealment. All source code is openly available, and even the more exotic compression format can be integrated and parsed by any analysis tool thanks to the provided sources. The goal of this packer is binary size reduction and efficient runtime unpacking—not evasion of antivirus software or distribution of malicious code. It is intended for legitimate use cases such as embedded systems, demos, general binary optimization or educational purposes like studying ELF structure and advanced packing techniques.
 
   
@@ -126,7 +127,13 @@ On Debian/Ubuntu:
 ```bash
 make install_dependencies
 ```
+On openSUSE:
+```bash
+make install_dependencies
+```
 For other distributions, install equivalents of: gcc/g++/make/nasm/pkg-config, zlib-dev, lz4-dev, zstd-dev, python3/pip, dpkg-deb, dialog/whiptail. For static builds, static libs (libstdc++/glibc) must be available on the system.
+
+Note: depending on the toolchain, stubs may be compiled as PIE (`-fpie`) to avoid runtime crashes when embedded as raw binary blobs. This can slightly increase stub size (typically a few hundred bytes). If you care about the smallest possible stubs, building on Debian remains preferable.
 
 ### Build commands
 ```bash

@@ -3,6 +3,7 @@
 #~~ Binaries for tests ~~~~~~~~~~~~~~~~~~~~~
 normal_dyn="./tools/binaries_sample/ls"
 normal_static="./tools/binaries_sample/simple_static"
+dynexec_test_bin="./tools/binaries_sample/dynexec_probe"
 big_dyn="./tools/binaries_sample/qemu-system-aarch64"
 big_static="./tools/binaries_sample/rclone"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,6 +36,12 @@ static_bcj_packing=""
 static_bcj_unpacking=""
 static_kexe_packing=""
 static_kexe_unpacking=""
+dynexec_none_packing=""
+dynexec_none_unpacking=""
+dynexec_bcj_packing=""
+dynexec_bcj_unpacking=""
+dynexec_kexe_packing=""
+dynexec_kexe_unpacking=""
 archive_packing=""
 archive_unpacking=""
 show_help() {
@@ -73,6 +80,12 @@ rm -f ./packed_binary_kexe
 rm -f ./packed_binary_kexe_unpacked
 rm -f ./packed_binary_none
 rm -f ./packed_binary_none_unpacked
+rm -f ./packed_dynexec_binary_none
+rm -f ./packed_dynexec_binary_none_unpacked
+rm -f ./packed_dynexec_binary_bcj
+rm -f ./packed_dynexec_binary_bcj_unpacked
+rm -f ./packed_dynexec_binary_kexe
+rm -f ./packed_dynexec_binary_kexe_unpacked
 rm -f ./trace_dyn.txt
 rm -f ./trace_static.txt
 echo -e "\n\033[37;43m✔ Nettoyage complet\033[0m\n"
@@ -311,6 +324,12 @@ rm -f ./packed_binary_bcj_unpacked
 rm -f ./packed_static_binary_none_unpacked
 rm -f ./packed_static_binary_bcj_unpacked
 rm -f ./packed_static_binary_kexe_unpacked
+rm -f ./packed_dynexec_binary_none
+rm -f ./packed_dynexec_binary_bcj
+rm -f ./packed_dynexec_binary_kexe
+rm -f ./packed_dynexec_binary_none_unpacked
+rm -f ./packed_dynexec_binary_bcj_unpacked
+rm -f ./packed_dynexec_binary_kexe_unpacked
 echo; echo -e "--------------------------------------------------------------------------------------------------------------------\e[0m"
 echo -e "\e[48;5;235m\e[97m                         || test dynamic binary '$dyn_bin'  \e[48;5;236m\e[97m"
 echo "--------------------------------------------------------------------------------------------------------------"
@@ -725,6 +744,188 @@ fi
 
 echo
 echo "--------------------------------------------------------------------------------------------------------------"
+echo -e "\e[48;5;235m\e[97m              || test dynexec binary '$dynexec_test_bin'  \e[48;5;236m\e[97m"
+echo "--------------------------------------------------------------------------------------------------------------"
+echo -e "######-----       packing dynexec binary...[filter:none] \e[48;5;229m\e[30m($packing)\e[0m"
+if [ $FULL -eq 1 ]; then
+    ./build/zelf -verbose $packing --exe-filter=none "$dynexec_test_bin"  --output"./packed_dynexec_binary_none"
+else
+    echo "[...] last 7 lines:"
+    ./build/zelf $packing "$dynexec_test_bin"  --exe-filter=none --output"./packed_dynexec_binary_none" | tail -n 7
+fi
+echo -e "\e[0m"; echo -e "\e[48;5;117m\e[30m######-----       testing dynexec execution [filter: none]:\e[0m"
+output=$(./packed_dynexec_binary_none --selftest)
+status=$?
+if [ $FULL -eq 1 ]; then
+    echo "$output"
+else
+    echo "[...] last 8 lines:"
+    echo "$output" | tail -n 8
+fi
+if [ $status -eq 0 ]; then
+    echo -e "\e[48;5;28m\e[97m DYNEXEC BINARY TEST [NONE] OK \e[0m"
+    dynexec_none_packing="ok"
+else
+    echo -e "\e[48;5;88m\e[97m DYNEXEC BINARY TEST [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    dynexec_none_packing="failed"
+    if [ $FULL -eq 0 ]; then
+        echo -e "Full output:\n"
+        echo "$output"
+    fi
+   echo -e "\e[48;5;88m\e[97mlast 200 lines strace:\e[0m\n"
+   strace -f -o trace_dyn.txt ./packed_dynexec_binary_none --selftest || true && tail -n 200 trace_dyn.txt
+fi
+
+echo -e "######-----       UNpacking dynexec binary...[filter:none] \e[48;5;229m\e[30m($packing)\e[0m"
+if [ $FULL -eq 1 ]; then
+    ./build/zelf -verbose --unpack  ./packed_dynexec_binary_none  --output"./packed_dynexec_binary_none_unpacked"
+else
+    echo "[...] last 7 lines:"
+    ./build/zelf --unpack ./packed_dynexec_binary_none  --output"./packed_dynexec_binary_none_unpacked" | tail -n 7
+fi
+output=$(./packed_dynexec_binary_none_unpacked --selftest)
+status=$?
+if [ $FULL -eq 1 ]; then
+    echo "$output"
+else
+    echo "[...] last 8 lines:"
+    echo "$output" | tail -n 8
+fi
+if [ $status -eq 0 ]; then
+    echo -e "\e[48;5;28m\e[97m UNPACKED DYNEXEC BINARY TEST [NONE] OK \e[0m"
+    dynexec_none_unpacking="ok"
+else
+    echo -e "\e[48;5;88m\e[97m UNPACKED DYNEXEC BINARY TEST [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    dynexec_none_unpacking="failed"
+    if [ $FULL -eq 0 ]; then
+        echo -e "Full output:\n"
+        echo "$output"
+    fi
+   echo -e "\e[48;5;88m\e[97mlast 200 lines strace:\e[0m\n"
+   strace -f -o trace_dyn.txt ./packed_dynexec_binary_none_unpacked --selftest || true && tail -n 200 trace_dyn.txt
+fi
+
+echo -e "######-----       packing dynexec binary...[filter:bcj] \e[48;5;229m\e[30m($packing)\e[0m"
+if [ $FULL -eq 1 ]; then
+    ./build/zelf -verbose $packing --exe-filter=bcj "$dynexec_test_bin"  --output"./packed_dynexec_binary_bcj"
+else
+    echo "[...] last 7 lines:"
+    ./build/zelf $packing "$dynexec_test_bin"  --exe-filter=bcj --output"./packed_dynexec_binary_bcj" | tail -n 7
+fi
+echo -e "\e[0m"; echo -e "\e[48;5;117m\e[30m######-----       testing dynexec execution [filter: bcj]:\e[0m"
+output=$(./packed_dynexec_binary_bcj --selftest)
+status=$?
+if [ $FULL -eq 1 ]; then
+    echo "$output"
+else
+    echo "[...] last 8 lines:"
+    echo "$output" | tail -n 8
+fi
+if [ $status -eq 0 ]; then
+    echo -e "\e[48;5;28m\e[97m DYNEXEC BINARY TEST [BCJ] OK \e[0m"
+    dynexec_bcj_packing="ok"
+else
+    echo -e "\e[48;5;88m\e[97m DYNEXEC BINARY TEST [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    dynexec_bcj_packing="failed"
+    if [ $FULL -eq 0 ]; then
+        echo -e "Full output:\n"
+        echo "$output"
+    fi
+   echo -e "\e[48;5;88m\e[97mlast 200 lines strace:\e[0m\n"
+   strace -f -o trace_dyn.txt ./packed_dynexec_binary_bcj --selftest || true && tail -n 200 trace_dyn.txt
+fi
+
+echo -e "######-----       UNpacking dynexec binary...[filter:bcj] \e[48;5;229m\e[30m($packing)\e[0m"
+if [ $FULL -eq 1 ]; then
+    ./build/zelf -verbose --unpack  ./packed_dynexec_binary_bcj  --output"./packed_dynexec_binary_bcj_unpacked"
+else
+    echo "[...] last 7 lines:"
+    ./build/zelf --unpack ./packed_dynexec_binary_bcj  --output"./packed_dynexec_binary_bcj_unpacked" | tail -n 7
+fi
+output=$(./packed_dynexec_binary_bcj_unpacked --selftest)
+status=$?
+if [ $FULL -eq 1 ]; then
+    echo "$output"
+else
+    echo "[...] last 8 lines:"
+    echo "$output" | tail -n 8
+fi
+if [ $status -eq 0 ]; then
+    echo -e "\e[48;5;28m\e[97m UNPACKED DYNEXEC BINARY TEST [BCJ] OK \e[0m"
+    dynexec_bcj_unpacking="ok"
+else
+    echo -e "\e[48;5;88m\e[97m UNPACKED DYNEXEC BINARY TEST [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    dynexec_bcj_unpacking="failed"
+    if [ $FULL -eq 0 ]; then
+        echo -e "Full output:\n"
+        echo "$output"
+    fi
+   echo -e "\e[48;5;88m\e[97mlast 200 lines strace:\e[0m\n"
+   strace -f -o trace_dyn.txt ./packed_dynexec_binary_bcj_unpacked --selftest || true && tail -n 200 trace_dyn.txt
+fi
+
+echo -e "######-----       packing dynexec binary...[filter:kexe] \e[48;5;229m\e[30m($packing)\e[0m"
+if [ $FULL -eq 1 ]; then
+    ./build/zelf -verbose $packing --exe-filter=kanziexe "$dynexec_test_bin"  --output"./packed_dynexec_binary_kexe"
+else
+    echo "[...] last 7 lines:"
+    ./build/zelf $packing "$dynexec_test_bin"  --exe-filter=kanziexe --output"./packed_dynexec_binary_kexe" | tail -n 7
+fi
+echo -e "\e[0m"; echo -e "\e[48;5;117m\e[30m######-----       testing dynexec execution [filter: kexe]:\e[0m"
+output=$(./packed_dynexec_binary_kexe --selftest)
+status=$?
+if [ $FULL -eq 1 ]; then
+    echo "$output"
+else
+    echo "[...] last 8 lines:"
+    echo "$output" | tail -n 8
+fi
+if [ $status -eq 0 ]; then
+    echo -e "\e[48;5;28m\e[97m DYNEXEC BINARY TEST [KEXE] OK \e[0m"
+    dynexec_kexe_packing="ok"
+else
+    echo -e "\e[48;5;88m\e[97m DYNEXEC BINARY TEST [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    dynexec_kexe_packing="failed"
+    if [ $FULL -eq 0 ]; then
+        echo -e "Full output:\n"
+        echo "$output"
+    fi
+   echo -e "\e[48;5;88m\e[97mlast 200 lines strace:\e[0m\n"
+   strace -f -o trace_dyn.txt ./packed_dynexec_binary_kexe --selftest || true && tail -n 200 trace_dyn.txt
+fi
+
+echo -e "######-----       UNpacking dynexec binary...[filter:kexe] \e[48;5;229m\e[30m($packing)\e[0m"
+if [ $FULL -eq 1 ]; then
+    ./build/zelf -verbose --unpack  ./packed_dynexec_binary_kexe  --output"./packed_dynexec_binary_kexe_unpacked"
+else
+    echo "[...] last 7 lines:"
+    ./build/zelf --unpack ./packed_dynexec_binary_kexe  --output"./packed_dynexec_binary_kexe_unpacked" | tail -n 7
+fi
+output=$(./packed_dynexec_binary_kexe_unpacked --selftest)
+status=$?
+if [ $FULL -eq 1 ]; then
+    echo "$output"
+else
+    echo "[...] last 8 lines:"
+    echo "$output" | tail -n 8
+fi
+if [ $status -eq 0 ]; then
+    echo -e "\e[48;5;28m\e[97m UNPACKED DYNEXEC BINARY TEST [KEXE] OK \e[0m"
+    dynexec_kexe_unpacking="ok"
+else
+    echo -e "\e[48;5;88m\e[97m UNPACKED DYNEXEC BINARY TEST [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    dynexec_kexe_unpacking="failed"
+    if [ $FULL -eq 0 ]; then
+        echo -e "Full output:\n"
+        echo "$output"
+    fi
+   echo -e "\e[48;5;88m\e[97mlast 200 lines strace:\e[0m\n"
+   strace -f -o trace_dyn.txt ./packed_dynexec_binary_kexe_unpacked --selftest || true && tail -n 200 trace_dyn.txt
+fi
+
+
+echo
+echo "--------------------------------------------------------------------------------------------------------------"
 echo -e "\e[48;5;235m\e[97m              || test archive mode on file '$stat_bin'  \e[48;5;236m\e[97m"
 echo "--------------------------------------------------------------------------------------------------------------"
 echo -e "######-----       Testing archive mode (packing)... \e[48;5;229m\e[30m($packing)\e[0m"
@@ -758,45 +959,51 @@ rm -f "./simple_static_${packing}_unpacked"
 # Summary
 if [ $SUMMARY -eq 1 ]; then
     echo
-       echo "┌────────────────────────────────────────────────────────────────────────────────────┐"
+       echo "┌───────────────────────────────────────────────────────────────────────────────────────────────┐"
     if [ $BIG -eq 1 ]; then
         summary_text="SUMMARY: ${packing#-} {BIG}"
     else
         summary_text="SUMMARY: ${packing#-}"
     fi
-    total_content_width=84
+    total_content_width=107
     text_length=${#summary_text}
     total_padding=$((total_content_width - text_length))
     left_padding=$((total_padding / 2))
     right_padding=$((total_padding - left_padding))
     printf -v padded_line "│\e[48;5;235m\e[97m%*s%s%*s\e[0m\e[48;5;236m\e[97m\e[0m│" $left_padding "" "$summary_text" $right_padding ""
     echo "$padded_line"
-       echo "├───────────────┬──────────────────────┬──────────────────────┬──────────────────────┤"
-     printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "Filter" "Dynamic" "Static" "Archive"
-     printf "├───────────────┼──────────────────────┼──────────────────────┼──────────────────────┤\n"
+       echo "├───────────────┬──────────────────────┬──────────────────────┬──────────────────────┬──────────────────────┤"
+     printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "Filter" "Dynamic" "Static" "Dynexec" "Archive"
+     printf "├───────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤\n"
     dynamic_none_packing_line="packing: ${dynamic_none_packing:-unknown}"
     dynamic_none_unpacking_line="unpacking: ${dynamic_none_unpacking:-unknown}"
     static_none_packing_line="packing: ${static_none_packing:-unknown}"
     static_none_unpacking_line="unpacking: ${static_none_unpacking:-unknown}"
+    dynexec_none_packing_line="packing: ${dynexec_none_packing:-unknown}"
+    dynexec_none_unpacking_line="unpacking: ${dynexec_none_unpacking:-unknown}"
     archive_packing_line="packing: ${archive_packing:-unknown}"
     archive_unpacking_line="unpacking: ${archive_unpacking:-unknown}"
-    printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "none" "$dynamic_none_packing_line" "$static_none_packing_line" "$archive_packing_line"
-    printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "" "$dynamic_none_unpacking_line" "$static_none_unpacking_line" "$archive_unpacking_line"
-    printf "├───────────────┼──────────────────────┼──────────────────────┼──────────────────────┤\n"
+    printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "none" "$dynamic_none_packing_line" "$static_none_packing_line" "$dynexec_none_packing_line" "$archive_packing_line"
+    printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "" "$dynamic_none_unpacking_line" "$static_none_unpacking_line" "$dynexec_none_unpacking_line" "$archive_unpacking_line"
+    printf "├───────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤\n"
     dynamic_bcj_packing_line="packing: ${dynamic_bcj_packing:-unknown}"
     dynamic_bcj_unpacking_line="unpacking: ${dynamic_bcj_unpacking:-unknown}"
     static_bcj_packing_line="packing: ${static_bcj_packing:-unknown}"
     static_bcj_unpacking_line="unpacking: ${static_bcj_unpacking:-unknown}"
-    printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "bcj" "$dynamic_bcj_packing_line" "$static_bcj_packing_line" ""
-    printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "" "$dynamic_bcj_unpacking_line" "$static_bcj_unpacking_line" ""
-    printf "├───────────────┼──────────────────────┼──────────────────────┼──────────────────────┤\n"
+    dynexec_bcj_packing_line="packing: ${dynexec_bcj_packing:-unknown}"
+    dynexec_bcj_unpacking_line="unpacking: ${dynexec_bcj_unpacking:-unknown}"
+    printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "bcj" "$dynamic_bcj_packing_line" "$static_bcj_packing_line" "$dynexec_bcj_packing_line" ""
+    printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "" "$dynamic_bcj_unpacking_line" "$static_bcj_unpacking_line" "$dynexec_bcj_unpacking_line" ""
+    printf "├───────────────┼──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┤\n"
     dynamic_kexe_packing_line="packing: ${dynamic_kexe_packing:-unknown}"
     dynamic_kexe_unpacking_line="unpacking: ${dynamic_kexe_unpacking:-unknown}"
     static_kexe_packing_line="packing: ${static_kexe_packing:-unknown}"
     static_kexe_unpacking_line="unpacking: ${static_kexe_unpacking:-unknown}"
-    printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "kanziexe" "$dynamic_kexe_packing_line" "$static_kexe_packing_line" ""
-    printf "│ %-13s │ %-20s │ %-20s │ %-20s │\n" "" "$dynamic_kexe_unpacking_line" "$static_kexe_unpacking_line" ""
-    echo "└───────────────┴──────────────────────┴──────────────────────┴──────────────────────┘"
+    dynexec_kexe_packing_line="packing: ${dynexec_kexe_packing:-unknown}"
+    dynexec_kexe_unpacking_line="unpacking: ${dynexec_kexe_unpacking:-unknown}"
+    printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "kanziexe" "$dynamic_kexe_packing_line" "$static_kexe_packing_line" "$dynexec_kexe_packing_line" ""
+    printf "│ %-13s │ %-20s │ %-20s │ %-20s │ %-20s │\n" "" "$dynamic_kexe_unpacking_line" "$static_kexe_unpacking_line" "$dynexec_kexe_unpacking_line" ""
+    echo "└───────────────┴──────────────────────┴──────────────────────┴──────────────────────┴──────────────────────┘"
 fi
 echo -e "\n\e[48;5;94m\e[97m ----------------------------------------------------------------------------------------------------- \e[0m\n│"
 echo
