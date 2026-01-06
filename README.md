@@ -163,7 +163,7 @@ Main user options:
 - Strip: `--no-strip` disables super-strip before compression.
 - Password: `--password` (prompts for password, random salt).
 - Output: `--output <file|dir>`, `--nobackup` to avoid `.bak` when overwriting.
-- Archives: `--archive` (creates `.zlf`), `--archive-tar` (creates `.tar.zlf` from a directory), `--unpack` (unpacks packed ELF or `.zlf` archive; auto-extracts `.tar.zlf`).
+- Archives: `--archive` (creates `.zlf`), `--archive-tar` (creates `.tar.zlf` from a directory), `--archive-sfx` (creates a self-extracting `.sfx`), `--archive-tar-sfx` (creates a self-extracting `.tar.sfx` from a directory), `--unpack` (unpacks packed ELF or `.zlf`/SFX archive; auto-extracts `.tar.zlf`).
 - Display: `--verbose`, `--no-progress`, `--no-colors`.
 
 ### Examples

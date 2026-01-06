@@ -9,5 +9,6 @@
 - Added an explicit 1-byte stage0 header flags field used to propagate the selected EXE filter (BCJ/KanziEXE/none) without relying on heuristics.
 - Fixed dynamic loader handoff on recent glibc/ld-linux by updating AUXV entries to match the decompressed in-memory ELF mapping (notably `AT_PHDR` and `AT_ENTRY`).
 - Removed the ZSTD-only `memfd_create+execveat` fast-path from static stubs (execution now always continues from the on-disk packed binary).
+- Added self-extracting (SFX) archive modes (`--archive-sfx` and `--archive-tar-sfx`).
 - Added a preflight RAM / `RLIMIT_AS` check for LZHAM and abort early with an explicit error message when memory is insufficient (keeps existing LZHAM compression settings unchanged).
 - Removed strict-aliasing/unaligned-access-unsafe loads/stores in stage0 wrapper patching and unpack/parsing paths (replaced with `memcpy` based accesses where needed).

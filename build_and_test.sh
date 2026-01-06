@@ -351,10 +351,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m DYNAMIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➤ DYNAMIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
     dynamic_none_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m DYNAMIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➤ DYNAMIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖    \e[0m"
     dynamic_none_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -382,10 +382,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED DYNAMIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➤ UNPACKED DYNAMIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
     dynamic_none_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED DYNAMIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➤ UNPACKED DYNAMIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖    \e[0m"
     dynamic_none_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -417,10 +417,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m DYNAMIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➤ DYNAMIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
     dynamic_bcj_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m DYNAMIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➤ DYNAMIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
     dynamic_bcj_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -451,10 +451,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED DYNAMIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➤ UNPACKED DYNAMIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
     dynamic_bcj_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED DYNAMIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➤ UNPACKED DYNAMIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
     dynamic_bcj_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -485,10 +485,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m DYNAMIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➤ DYNAMIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
     dynamic_kexe_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m DYNAMIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➤ DYNAMIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
     dynamic_kexe_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -519,10 +519,10 @@ else
 fi
 
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED DYNAMIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➤ UNPACKED DYNAMIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
     dynamic_kexe_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED DYNAMIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➤ UNPACKED DYNAMIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
     dynamic_kexe_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -557,10 +557,10 @@ else
     echo "$output" | tail -n 6
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m STATIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ▪ STATIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
     static_none_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m STATIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖   \e[0m"
+    echo -e "\e[48;5;88m\e[97m ▪ STATIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖   \e[0m"
     static_none_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -591,10 +591,10 @@ else
 fi
 
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED STATIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ▪ UNPACKED STATIC BINARY TEST$(big_tag) [NONE] OK \e[0m"
     static_none_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED STATIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ▪ UNPACKED STATIC BINARY TEST$(big_tag) [NONE] FAILED       ✖✖✖✖✖    \e[0m"
     static_none_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -625,10 +625,10 @@ else
     echo "$output" | tail -n 6
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m STATIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ▪ STATIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
     static_bcj_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m STATIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖   \e[0m"
+    echo -e "\e[48;5;88m\e[97m ▪ STATIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖   \e[0m"
     static_bcj_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -657,10 +657,10 @@ else
 fi
 
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED STATIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ▪ UNPACKED STATIC BINARY TEST$(big_tag) [BCJ] OK \e[0m"
     static_bcj_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED STATIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ▪ UNPACKED STATIC BINARY TEST$(big_tag) [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
     static_bcj_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -692,10 +692,10 @@ else
     echo "$output" | tail -n 6
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m STATIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ▪ STATIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
     static_kexe_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m STATIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖   \e[0m"
+    echo -e "\e[48;5;88m\e[97m ▪ STATIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖   \e[0m"
     static_kexe_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -727,10 +727,10 @@ else
 fi
 
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED STATIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ▪ UNPACKED STATIC BINARY TEST$(big_tag) [KEXE] OK \e[0m"
     static_kexe_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED STATIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ▪ UNPACKED STATIC BINARY TEST$(big_tag) [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
     static_kexe_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -763,10 +763,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m DYNEXEC BINARY TEST [NONE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➢ DYNEXEC BINARY TEST [NONE] OK \e[0m"
     dynexec_none_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m DYNEXEC BINARY TEST [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➢ DYNEXEC BINARY TEST [NONE] FAILED       ✖✖✖✖✖    \e[0m"
     dynexec_none_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -792,10 +792,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED DYNEXEC BINARY TEST [NONE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➢ UNPACKED DYNEXEC BINARY TEST [NONE] OK \e[0m"
     dynexec_none_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED DYNEXEC BINARY TEST [NONE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➢ UNPACKED DYNEXEC BINARY TEST [NONE] FAILED       ✖✖✖✖✖    \e[0m"
     dynexec_none_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -822,10 +822,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m DYNEXEC BINARY TEST [BCJ] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➢ DYNEXEC BINARY TEST [BCJ] OK \e[0m"
     dynexec_bcj_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m DYNEXEC BINARY TEST [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➢ DYNEXEC BINARY TEST [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
     dynexec_bcj_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -851,10 +851,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED DYNEXEC BINARY TEST [BCJ] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➢ UNPACKED DYNEXEC BINARY TEST [BCJ] OK \e[0m"
     dynexec_bcj_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED DYNEXEC BINARY TEST [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➢ UNPACKED DYNEXEC BINARY TEST [BCJ] FAILED       ✖✖✖✖✖    \e[0m"
     dynexec_bcj_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -881,10 +881,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m DYNEXEC BINARY TEST [KEXE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➢ DYNEXEC BINARY TEST [KEXE] OK \e[0m"
     dynexec_kexe_packing="ok"
 else
-    echo -e "\e[48;5;88m\e[97m DYNEXEC BINARY TEST [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➢ DYNEXEC BINARY TEST [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
     dynexec_kexe_packing="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -910,10 +910,10 @@ else
     echo "$output" | tail -n 8
 fi
 if [ $status -eq 0 ]; then
-    echo -e "\e[48;5;28m\e[97m UNPACKED DYNEXEC BINARY TEST [KEXE] OK \e[0m"
+    echo -e "\e[48;5;28m\e[97m ➢ UNPACKED DYNEXEC BINARY TEST [KEXE] OK \e[0m"
     dynexec_kexe_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m UNPACKED DYNEXEC BINARY TEST [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
+    echo -e "\e[48;5;88m\e[97m ➢ UNPACKED DYNEXEC BINARY TEST [KEXE] FAILED       ✖✖✖✖✖    \e[0m"
     dynexec_kexe_unpacking="failed"
     if [ $FULL -eq 0 ]; then
         echo -e "Full output:\n"
@@ -946,10 +946,10 @@ fi
 echo -e "######-----       Testing archive mode (unpacking)... \e[48;5;229m\e[30m($packing)\e[0m"
  ./build/zelf --unpack --verbose  ./simple_static_${packing}.zlf  --output"./simple_static_${packing}_unpacked"
 if cmp -s "$stat_bin" "./simple_static_${packing}_unpacked"; then
-    echo -e "\e[48;5;28m\e[97m ARCHIVE MODE OK\e[0m"
+    echo -e "\e[48;5;28m\e[97m • ARCHIVE MODE OK\e[0m"
     archive_unpacking="ok"
 else
-    echo -e "\e[48;5;88m\e[97m  ARCHIVE MODE FAILED                     ✖✖✖✖✖   \e[0m"
+    echo -e "\e[48;5;88m\e[97m • ARCHIVE MODE FAILED                     ✖✖✖✖✖   \e[0m"
     archive_unpacking="failed"
 fi
 rm -f "./simple_static_${packing}.zlf"
