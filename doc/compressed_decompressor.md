@@ -95,6 +95,24 @@ The stage-0 header fields are patched by the packer. Conceptually:
 - **`clen`**: compressed stage-1 size (NRV stream length)
 - **`dst_off`**: destination offset (relative to wrapper base) where stage-1 will be written
 - **`blob_off`**: offset (relative to wrapper base) where compressed bytes begin
+- **`flags`**: 1 byte, stage-0 metadata flags (currently used to propagate EXE filter choice)
+
+### Stage-0 `flags` field (EXE filter propagation)
+
+The stage-0 header contains a 1-byte `flags` field at `STAGE0_HDR_FLAGS_OFF` (currently `0x62`).
+
+This field is written by the packer when building the wrapper and is used by the unpacker to reliably recover the selected EXE filter for stage0-wrapped stubs (ZSTD and Density dynamic).
+
+Bit semantics match the packer `elfz_flags` encoding:
+
+- `flags & 0x01`: BCJ filter enabled
+- `flags & 0x02`: KanziEXE filter enabled
+
+Typical values:
+
+- `0x00`: no filter
+- `0x01`: BCJ
+- `0x02`: KanziEXE
 
 ### Important constraint: do not patch stage-0 wrapper contents
 
@@ -106,6 +124,8 @@ Therefore:
 - Do not run generic “patch stub blob” code on the wrapper.
 
 The current code implements exactly that behavior for zstd.
+
+In addition, because the wrapper is an outer container, stage-0 wrapped stubs must not rely on heuristic filter detection at unpack time. The filter choice is propagated via the stage-0 header `flags` field.
 
 ---
 

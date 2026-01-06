@@ -83,6 +83,16 @@ static inline long z_syscall_mmap(void *addr, size_t len, int prot,
 | **Direct** | `virtual_start >= 0x10000` | Patched address in `.rodata.elfz_params` |
 | **Scan** | `virtual_start < 0x10000` (PIE) | Marker search in memory (see below) |
 
+### 3.6 Dynexec stubs
+
+Dynexec is a dedicated stub mode built from `stub_dynexec.c` / `stub_dynexec_bcj.c` (both include `stub_core_dynexec.inc`).
+
+Runtime behavior is similar to the dynamic stub (auxv patching + ld.so handoff), but the payload lookup follows the **Scan** strategy, because the packer can emit `virtual_start=0` for dynamic binaries.
+
+Important specifics:
+- For **ZSTD/Density stage0-wrapped** binaries, the real stub may be decompressed to a **higher address** while the packed data stays at **lower addresses**. The dynexec stub therefore uses a VMA-bounded marker scan (via `/proc/self/maps`) that may scan backward then forward within mappings.
+- Density requires `dst_cap = alloc_size` (not `filtered_size`) because its decoder can require extra output capacity for internal processing.
+
 ### 3.2 Direct mode (non-PIE)
 
 ```c
