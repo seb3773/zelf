@@ -146,10 +146,12 @@ if [ -n "$DIALOG" ]; then
   7 "${C_STATE}Linker: $LINKER_MODE${C_RESET}" \
   8 "${C_ITEM}Create .deb package (make deb)${C_RESET}" \
   9 "${C_ITEM}Create tar.gz package (make tar)${C_RESET}" \
-  10 "${C_ITEM}Install build deps (make install_dependencies)${C_RESET}" \
-  11 "${C_ITEM}Quick tests (run test_all.sh)${C_RESET}" \
-  12 "${C_ITEM}Show Makefile (open in pager)${C_RESET}" \
-  13 "${C_ITEM}Exit${C_RESET}" \
+  10 "${C_ITEM}Create .rpm package (make rpm)${C_RESET}" \
+  11 "${C_ITEM}Create .apk package (make apk)${C_RESET}" \
+  12 "${C_ITEM}Install build deps (make install_dependencies)${C_RESET}" \
+  13 "${C_ITEM}Quick tests (run test_all.sh)${C_RESET}" \
+  14 "${C_ITEM}Show Makefile (open in pager)${C_RESET}" \
+  15 "${C_ITEM}Exit${C_RESET}" \
   3>&1 1>&2 2>&3)
     rc=$?
     [ $rc -ne 0 ] && break
@@ -164,10 +166,12 @@ if [ -n "$DIALOG" ]; then
       7) select_linker; SKIP_PAUSE=1 ;;
       8) run_make deb ;;
       9) run_make tar ;;
-      10) run_make install_dependencies ;;
-      11) run_quick_tests ;;
-      12) less "$ROOT_DIR/Makefile" ;;
-      13) break ;;
+      10) run_make rpm ;;
+      11) run_make apk ;;
+      12) run_make install_dependencies ;;
+      13) run_quick_tests ;;
+      14) less "$ROOT_DIR/Makefile" ;;
+      15) break ;;
     esac
     if [ "${SKIP_PAUSE:-0}" -ne 1 ]; then
       echo
@@ -178,7 +182,7 @@ if [ -n "$DIALOG" ]; then
   done
 else
   PS3="${C_HIGHLIGHT}Choose an action (type number): ${C_RESET}"
-  options=("make all" "make packer" "make stubs" "make tools" "make clean" "build type" "linker" "make deb (package)" "make tar (package tar.gz)" "install deps" "quick tests" "show Makefile" "exit")
+  options=("make all" "make packer" "make stubs" "make tools" "make clean" "build type" "linker" "make deb (package)" "make tar (package tar.gz)" "make rpm (package)" "make apk (package)" "install deps" "quick tests" "show Makefile" "exit")
 
   while true; do
     echo
@@ -204,10 +208,12 @@ else
         7) select_linker; break;;
         8) run_make deb; break;;
         9) run_make tar; break;;
-        10) run_make install_dependencies; break;;
-        11) run_quick_tests; break;;
-        12) less "$ROOT_DIR/Makefile"; break;;
-        13)
+        10) run_make rpm; break;;
+        11) run_make apk; break;;
+        12) run_make install_dependencies; break;;
+        13) run_quick_tests; break;;
+        14) less "$ROOT_DIR/Makefile"; break;;
+        15)
           echo "${C_DIM}Bye${C_RESET}"
           exit 0
           ;;

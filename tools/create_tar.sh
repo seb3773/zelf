@@ -55,13 +55,29 @@ else
   ZELF_VERSION=$(echo "$ZELF_VERSION_RAW" | tr '.' '_')
 fi
 
-ARCH=amd64
+HOST_UNAME_M=$(uname -m 2>/dev/null || echo unknown)
+FILE_ARCH=amd64
+case "$HOST_UNAME_M" in
+  x86_64)
+    FILE_ARCH=amd64
+    ;;
+  aarch64)
+    FILE_ARCH=aarch64
+    ;;
+  arm64)
+    FILE_ARCH=arm64
+    ;;
+  *)
+    FILE_ARCH="$HOST_UNAME_M"
+    ;;
+esac
+
 PKGNAME=zelf
 PKG_STATIC_SUFFIX=""
 if [ "$STATIC_BUILD" = "1" ]; then
   PKG_STATIC_SUFFIX="_static"
 fi
-OUT_TAR="$BUILD_DIR/${PKGNAME}${PKG_STATIC_SUFFIX}_${ZELF_VERSION}_${TIMESTAMP}_${ARCH}.tar.gz"
+OUT_TAR="$BUILD_DIR/${PKGNAME}${PKG_STATIC_SUFFIX}_${ZELF_VERSION}_${TIMESTAMP}_${FILE_ARCH}.tar.gz"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT

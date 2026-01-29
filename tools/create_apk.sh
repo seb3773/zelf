@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Create a minimal Debian package containing the packer binary `build/zelf`
-# Installs binary to /usr/bin/zelf
-
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT_DIR/build"
-PKG_DIR="$BUILD_DIR/package"
-# Detect static intent from make (STATIC=1) – default 0
 STATIC_BUILD="${STATIC:-0}"
 
-echo "Building .deb package for zELF packer"
+if ! command -v nfpm >/dev/null 2>&1; then
+  echo "Error: nfpm not found. Install nfpm to create .apk packages." >&2
+  exit 1
+fi
+
+echo "Building .apk package for zELF packer"
 
 if [ ! -x "$BUILD_DIR/zelf" ]; then
   echo "Packer binary not found or not executable: $BUILD_DIR/zelf"
@@ -40,48 +40,38 @@ echo "Replacing $BUILD_DIR/zelf with release binary"
 mv -f "$RELEASE_BIN" "$BUILD_DIR/zelf"
 chmod 0755 "$BUILD_DIR/zelf"
 
-
-if ! command -v dpkg-deb >/dev/null 2>&1; then
-  echo "Error: dpkg-deb not found. Install 'dpkg' package to create .deb files." >&2
-  exit 1
-fi
-
-# extract zELF version from header, fall back to timestamp-only if missing
 HEADER="$ROOT_DIR/src/packer/zelf_packer.h"
 ZELF_VERSION_RAW=""
 if [ -f "$HEADER" ]; then
-  # expects a line like: #define ZELF_VERSION "v0.8"
   ZELF_VERSION_RAW=$(grep -E '^#define[[:space:]]+ZELF_VERSION' "$HEADER" || true)
   ZELF_VERSION_RAW=$(echo "$ZELF_VERSION_RAW" | sed -E 's/.*"([^"]+)".*/\1/')
 fi
 
-# If we failed to extract a version, use timestamp as a fallback
 TIMESTAMP=$(date +%Y%m%d%H%M)
 if [ -z "$ZELF_VERSION_RAW" ]; then
   ZELF_VERSION="v${TIMESTAMP}"
 else
-  # sanitize version for use in filenames: replace dots with underscores
   ZELF_VERSION=$(echo "$ZELF_VERSION_RAW" | tr '.' '_')
 fi
 
 HOST_UNAME_M=$(uname -m 2>/dev/null || echo unknown)
-DEB_ARCH=amd64
+NFPM_ARCH=amd64
 FILE_ARCH=amd64
 case "$HOST_UNAME_M" in
   x86_64)
-    DEB_ARCH=amd64
+    NFPM_ARCH=amd64
     FILE_ARCH=amd64
     ;;
   aarch64)
-    DEB_ARCH=arm64
+    NFPM_ARCH=arm64
     FILE_ARCH=aarch64
     ;;
   arm64)
-    DEB_ARCH=arm64
+    NFPM_ARCH=arm64
     FILE_ARCH=arm64
     ;;
   *)
-    DEB_ARCH="$HOST_UNAME_M"
+    NFPM_ARCH="$HOST_UNAME_M"
     FILE_ARCH="$HOST_UNAME_M"
     ;;
 esac
@@ -91,33 +81,35 @@ PKG_STATIC_SUFFIX=""
 if [ "$STATIC_BUILD" = "1" ]; then
   PKG_STATIC_SUFFIX="_static"
 fi
-OUT_DEB="$BUILD_DIR/${PKGNAME}${PKG_STATIC_SUFFIX}_${ZELF_VERSION}_${TIMESTAMP}_${FILE_ARCH}.deb"
 
-rm -rf "$PKG_DIR"
-mkdir -p "$PKG_DIR/DEBIAN"
-mkdir -p "$PKG_DIR/usr/bin"
+OUT_APK="$BUILD_DIR/${PKGNAME}${PKG_STATIC_SUFFIX}_${ZELF_VERSION}_${TIMESTAMP}_${FILE_ARCH}.apk"
 
-cat > "$PKG_DIR/DEBIAN/control" <<EOF
-Package: $PKGNAME
-Version: ${ZELF_VERSION_RAW:-$ZELF_VERSION}-${TIMESTAMP}
-Section: utils
-Priority: optional
-Architecture: $DEB_ARCH
-Maintainer: zELF packer <noreply@example.com>
-Depends: 
-Description: zELF ELF packer (packer only)
- A minimal package containing the zELF packer binary.
+NFPM_CFG="$(mktemp)"
+trap 'rm -f "$NFPM_CFG"' EXIT
+
+cat > "$NFPM_CFG" <<EOF
+name: "zELF"
+arch: "$NFPM_ARCH"
+platform: "linux"
+version: "${ZELF_VERSION_RAW:-${ZELF_VERSION}}"
+section: "default"
+priority: "extra"
+maintainer: "seb3773 <seb3773@gmail.com>"
+description: "Zelf binary packer"
+license: "GPL3"
+contents:
+  - src: "$BUILD_DIR/zelf"
+    dst: "/usr/bin/zelf"
+  - src: "$ROOT_DIR/README.md"
+    dst: "/usr/share/doc/zelf/README.md"
 EOF
 
-cp "$BUILD_DIR/zelf" "$PKG_DIR/usr/bin/zelf"
-chmod 0755 "$PKG_DIR/usr/bin/zelf"
+echo "Building $OUT_APK"
+if ! nfpm pkg -f "$NFPM_CFG" -p apk -t "$OUT_APK"; then
+  echo "Error: nfpm failed to create apk" >&2
+  exit 1
+fi
 
-echo "Building $OUT_DEB"
-dpkg-deb --build "$PKG_DIR" "$OUT_DEB"
-
-DEB_BASENAME="$(basename "$OUT_DEB")"
-DEB_DIRNAME="$(dirname "$OUT_DEB")"
-printf "\033[1;32m%s\033[0m generated in %s\n" "$DEB_BASENAME" "$DEB_DIRNAME"
-
-# remove temporary package directory after building the .deb
-rm -rf "$PKG_DIR"
+APK_BASENAME="$(basename "$OUT_APK")"
+APK_DIRNAME="$(dirname "$OUT_APK")"
+printf "\033[1;32m%s\033[0m generated in %s\n" "$APK_BASENAME" "$APK_DIRNAME"
