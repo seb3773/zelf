@@ -1,0 +1,330 @@
+
+  -= Zelf packer shell script tester =-
+  -------------------------------------
+
+[48;5;94m[97m=== SKIPPING BUILD (make clean + make) BECAUSE -nobuild WAS SPECIFIED ===[0m
+[48;5;33m[97m=== SPEEDTEST MODE ENABLED ===[0m
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/ls[0m
+Original size:           151344 bytes
+Packed size:             75564 bytes
+Compression time:        .253841473 sec
+Decompression time(net): .000391047 sec
+Compression ratio:       49.00 %
+Compression speed:       .568591 MiB/s
+Decompression speed:     369.091183 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/putty[0m
+Original size:           1354680 bytes
+Packed size:             564693 bytes
+Compression time:        .415243017 sec
+Decompression time(net): .004806470 sec
+Compression ratio:       41.00 %
+Compression speed:       3.111245 MiB/s
+Decompression speed:     268.788320 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/ls[0m
+Original size:           151344 bytes
+Packed size:             75564 bytes
+Compression time:        .253787098 sec
+Decompression time(net): .000418087 sec
+Compression ratio:       49.00 %
+Compression speed:       .568712 MiB/s
+Decompression speed:     345.220014 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/lsusb[0m
+Original size:           253000 bytes
+Packed size:             87414 bytes
+Compression time:        .253612103 sec
+Decompression time(net): .000613189 sec
+Compression ratio:       34.00 %
+Compression speed:       .951370 MiB/s
+Decompression speed:     393.482270 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/nano[0m
+Original size:           287480 bytes
+Packed size:             141090 bytes
+Compression time:        .255196511 sec
+Decompression time(net): .001036715 sec
+Compression ratio:       49.00 %
+Compression speed:       1.074317 MiB/s
+Decompression speed:     264.452621 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/strace[0m
+Original size:           2034104 bytes
+Packed size:             673506 bytes
+Compression time:        .565436052 sec
+Decompression time(net): .005503395 sec
+Compression ratio:       33.00 %
+Compression speed:       3.430754 MiB/s
+Decompression speed:     352.486419 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/scalar[0m
+Original size:           2199656 bytes
+Packed size:             1072138 bytes
+Compression time:        .577474425 sec
+Decompression time(net): .008502308 sec
+Compression ratio:       48.00 %
+Compression speed:       3.632637 MiB/s
+Decompression speed:     246.727712 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/lsusb[0m
+Original size:           253000 bytes
+Packed size:             87414 bytes
+Compression time:        .254544456 sec
+Decompression time(net): .000338926 sec
+Compression ratio:       34.00 %
+Compression speed:       .947885 MiB/s
+Decompression speed:     711.892861 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/nasm[0m
+Original size:           1923760 bytes
+Packed size:             461165 bytes
+Compression time:        .609724558 sec
+Decompression time(net): .003991715 sec
+Compression ratio:       23.00 %
+Compression speed:       3.008965 MiB/s
+Decompression speed:     459.611971 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/rsync[0m
+Original size:           514440 bytes
+Packed size:             264080 bytes
+Compression time:        .307782322 sec
+Decompression time(net): .001853478 sec
+Compression ratio:       51.00 %
+Compression speed:       1.594009 MiB/s
+Decompression speed:     264.695885 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/dmesg[0m
+Original size:           88656 bytes
+Packed size:             38353 bytes
+Compression time:        .252604927 sec
+Decompression time(net): .000228740 sec
+Compression ratio:       43.00 %
+Compression speed:       .334704 MiB/s
+Decompression speed:     369.624901 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/cat[0m
+Original size:           44016 bytes
+Packed size:             22527 bytes
+Compression time:        .252344023 sec
+Decompression time(net): .000144806 sec
+Compression ratio:       51.00 %
+Compression speed:       .166344 MiB/s
+Decompression speed:     289.877491 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/fio[0m
+Original size:           1795000 bytes
+Packed size:             432381 bytes
+Compression time:        .511655655 sec
+Decompression time(net): .004197392 sec
+Compression ratio:       24.00 %
+Compression speed:       3.345697 MiB/s
+Decompression speed:     407.835389 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/dmesg[0m
+Original size:           88656 bytes
+Packed size:             38353 bytes
+Compression time:        .252839126 sec
+Decompression time(net): .000202606 sec
+Compression ratio:       43.00 %
+Compression speed:       .334394 MiB/s
+Decompression speed:     417.302547 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/scalar[0m
+Original size:           2199656 bytes
+Packed size:             1072138 bytes
+Compression time:        .627451044 sec
+Decompression time(net): .008538113 sec
+Compression ratio:       48.00 %
+Compression speed:       3.343296 MiB/s
+Decompression speed:     245.693047 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/htop[0m
+Original size:           317320 bytes
+Packed size:             144062 bytes
+Compression time:        .255186626 sec
+Decompression time(net): .001093822 sec
+Compression ratio:       45.00 %
+Compression speed:       1.185873 MiB/s
+Decompression speed:     276.662016 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/nano[0m
+Original size:           287480 bytes
+Packed size:             141090 bytes
+Compression time:        .255080771 sec
+Decompression time(net): .001168437 sec
+Compression ratio:       49.00 %
+Compression speed:       1.074804 MiB/s
+Decompression speed:     234.639950 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/w3m[0m
+Original size:           1630888 bytes
+Packed size:             1047148 bytes
+Compression time:        .413042415 sec
+Decompression time(net): .004939931 sec
+Compression ratio:       64.00 %
+Compression speed:       3.765557 MiB/s
+Decompression speed:     314.849539 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/fio[0m
+Original size:           1795000 bytes
+Packed size:             432381 bytes
+Compression time:        .562337193 sec
+Decompression time(net): .004607897 sec
+Compression ratio:       24.00 %
+Compression speed:       3.044161 MiB/s
+Decompression speed:     371.502444 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/bash[0m
+Original size:           1265648 bytes
+Packed size:             617329 bytes
+Compression time:        .415553342 sec
+Decompression time(net): .004746771 sec
+Compression ratio:       48.00 %
+Compression speed:       2.904597 MiB/s
+Decompression speed:     254.281278 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/rsync[0m
+Original size:           514440 bytes
+Packed size:             264080 bytes
+Compression time:        .307811378 sec
+Decompression time(net): .001927120 sec
+Compression ratio:       51.00 %
+Compression speed:       1.593859 MiB/s
+Decompression speed:     254.580929 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/grep[0m
+Original size:           203152 bytes
+Packed size:             99744 bytes
+Compression time:        .254400858 sec
+Decompression time(net): .000821474 sec
+Compression ratio:       49.00 %
+Compression speed:       .761554 MiB/s
+Decompression speed:     235.844348 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/putty[0m
+Original size:           1354680 bytes
+Packed size:             564693 bytes
+Compression time:        .415029523 sec
+Decompression time(net): .004574385 sec
+Compression ratio:       41.00 %
+Compression speed:       3.112846 MiB/s
+Decompression speed:     282.425506 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/grep[0m
+Original size:           203152 bytes
+Packed size:             99744 bytes
+Compression time:        .254343985 sec
+Decompression time(net): .000955468 sec
+Compression ratio:       49.00 %
+Compression speed:       .761724 MiB/s
+Decompression speed:     202.769742 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/wget[0m
+Original size:           470384 bytes
+Packed size:             231183 bytes
+Compression time:        .256566822 sec
+Decompression time(net): .001991626 sec
+Compression ratio:       49.00 %
+Compression speed:       1.748445 MiB/s
+Decompression speed:     225.239578 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/cat[0m
+Original size:           44016 bytes
+Packed size:             22527 bytes
+Compression time:        .252628914 sec
+Decompression time(net): .000123550 sec
+Compression ratio:       51.00 %
+Compression speed:       .166156 MiB/s
+Decompression speed:     339.749089 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/wget[0m
+Original size:           470384 bytes
+Packed size:             231183 bytes
+Compression time:        .256966216 sec
+Decompression time(net): .001807463 sec
+Compression ratio:       49.00 %
+Compression speed:       1.745727 MiB/s
+Decompression speed:     248.189312 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/scalar[0m
+Original size:           2199656 bytes
+Packed size:             1072138 bytes
+Compression time:        .577050584 sec
+Decompression time(net): .009034205 sec
+Compression ratio:       48.00 %
+Compression speed:       3.635305 MiB/s
+Decompression speed:     232.201394 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/lshw[0m
+Original size:           903656 bytes
+Packed size:             335400 bytes
+Compression time:        .361834237 sec
+Decompression time(net): .002393682 sec
+Compression ratio:       37.00 %
+Compression speed:       2.381734 MiB/s
+Decompression speed:     360.028190 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/strace[0m
+Original size:           2034104 bytes
+Packed size:             673506 bytes
+Compression time:        .565428317 sec
+Decompression time(net): .005522452 sec
+Compression ratio:       33.00 %
+Compression speed:       3.430800 MiB/s
+Decompression speed:     351.270051 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/w3m[0m
+Original size:           1630888 bytes
+Packed size:             1047148 bytes
+Compression time:        .413034135 sec
+Decompression time(net): .004945913 sec
+Compression ratio:       64.00 %
+Compression speed:       3.765633 MiB/s
+Decompression speed:     314.468734 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/htop[0m
+Original size:           317320 bytes
+Packed size:             144062 bytes
+Compression time:        .255136792 sec
+Decompression time(net): .001138901 sec
+Compression ratio:       45.00 %
+Compression speed:       1.186104 MiB/s
+Decompression speed:     265.711418 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/lshw[0m
+Original size:           903656 bytes
+Packed size:             335400 bytes
+Compression time:        .361753587 sec
+Decompression time(net): .002231239 sec
+Compression ratio:       37.00 %
+Compression speed:       2.382265 MiB/s
+Decompression speed:     386.239663 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/nasm[0m
+Original size:           1923760 bytes
+Packed size:             461165 bytes
+Compression time:        .611010352 sec
+Decompression time(net): .004004105 sec
+Compression ratio:       23.00 %
+Compression speed:       3.002633 MiB/s
+Decompression speed:     458.189782 MiB/s
+
+[48;5;60m[97mTesting binary (-doboz): /usr/bin/bash[0m
+Original size:           1265648 bytes
+Packed size:             617329 bytes
+Compression time:        .415353194 sec
+Decompression time(net): .004840394 sec
+Compression ratio:       48.00 %
+Compression speed:       2.905996 MiB/s
+Decompression speed:     249.362965 MiB/s
+
+[48;5;28m[97m=== SPEEDTEST SUMMARY ===[0m
+Compressor:                  [48;5;60m[97m  -doboz  [0m
+Average compression time:  374.374 ms (2.077 KB/ms)
+Average decompression time: 2.961 ms (329.582 KB/ms)
+Average [48;5;32m[97mcompression ratio:[0m   [48;5;32m[97m 43.54 % [0m
+Average [48;5;28m[97mcompression speed:[0m   [48;5;28m[97m 2.028 MiB/s[0m
+Average [48;5;37m[97mdecompression speed:[0m [48;5;37m[97m 321.857 MiB/s [0m
+[48;5;28m[97m=== DONE ===[0m

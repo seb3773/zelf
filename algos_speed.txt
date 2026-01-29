@@ -1,0 +1,65 @@
+compressor: apultra
+  comp.speed ✪✪○○○   decomp.speed ✪✪✪○○   avg.ratio ✪✪✪✪○
+
+compressor: blz
+  comp.speed ✪✪✪○○   decomp.speed ✪✪✪✪○   avg.ratio ✪✪✪✪○
+
+compressor: csc
+  comp.speed ✪✪✪✪○   decomp.speed ○○○○○   avg.ratio ✪✪○○○
+
+compressor: density
+  comp.speed ✪✪✪✪✪   decomp.speed ✪✪✪○○   avg.ratio ○○○○○
+
+compressor: doboz
+  comp.speed ✪✪✪✪○   decomp.speed ✪✪✪✪✪   avg.ratio ✪✪✪✪○
+
+compressor: exo
+  comp.speed ✪○○○○   decomp.speed ✪✪✪○○   avg.ratio ✪✪✪✪○
+
+compressor: lz4
+  comp.speed ✪✪✪✪○   decomp.speed ✪✪✪✪✪   avg.ratio ✪✪✪○○
+
+compressor: lzav
+  comp.speed ✪✪✪✪○   decomp.speed ✪✪✪✪✪   avg.ratio ✪✪○○○
+
+compressor: lzfse
+  comp.speed ✪✪✪✪✪   decomp.speed ✪✪✪○○   avg.ratio ✪✪○○○
+
+compressor: lzham
+  comp.speed ✪✪✪○○   decomp.speed ✪✪○○○   avg.ratio ✪✪○○○
+
+compressor: lzma
+  comp.speed ✪✪✪✪○   decomp.speed ✪○○○○   avg.ratio ✪✪✪✪✪
+
+compressor: lzsa2
+  comp.speed ✪✪✪○○   decomp.speed ✪✪✪✪○   avg.ratio ✪✪✪✪○
+
+compressor: nz1
+  comp.speed ✪✪✪✪✪   decomp.speed ✪✪✪✪✪   avg.ratio ○○○○○
+
+compressor: pp
+  comp.speed ✪✪✪✪○   decomp.speed ✪✪✪○○   avg.ratio ✪✪✪○○
+
+compressor: qlz
+  comp.speed ✪✪✪✪○   decomp.speed ✪✪✪✪✪   avg.ratio ✪✪✪○○
+
+compressor: rnc
+  comp.speed ✪✪✪✪○   decomp.speed ✪○○○○   avg.ratio ✪✪✪○○
+
+compressor: shrinkler
+  comp.speed ✪✪○○○   decomp.speed ○○○○○   avg.ratio ✪✪✪✪✪
+
+compressor: snappy
+  comp.speed ✪✪✪✪✪   decomp.speed ✪✪✪✪○   avg.ratio ✪○○○○
+
+compressor: stcr
+  comp.speed ✪✪✪○○   decomp.speed ✪✪✪✪○   avg.ratio ✪✪✪○○
+
+compressor: zstd
+  comp.speed ✪✪✪✪○   decomp.speed ✪✪✪✪✪   avg.ratio ✪✪✪✪○
+
+compressor: zx0
+  comp.speed ○○○○○   decomp.speed ✪✪✪○○   avg.ratio ✪✪✪✪○
+
+compressor: zx7b
+  comp.speed ✪✪✪○○   decomp.speed ✪✪✪○○   avg.ratio ✪✪✪✪○

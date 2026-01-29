@@ -1,0 +1,41 @@
+{
+  "by_size": {
+    "<20KB": {
+      "compressor": "zx0",
+      "ratio": 53.27,
+      "range": [
+        0,
+        20000
+      ]
+    },
+    "20-200KB": {
+      "compressor": "shrinkler",
+      "ratio": 41.74,
+      "range": [
+        20001,
+        200000
+      ]
+    },
+    "200-500KB": {
+      "compressor": "lzma",
+      "ratio": 33.13,
+      "range": [
+        200001,
+        500000
+      ]
+    },
+    ">500KB": {
+      "compressor": "lzma",
+      "ratio": 27.74,
+      "range": [
+        500001,
+        Infinity
+      ]
+    }
+  },
+  "by_entropy": {},
+  "global_recommendation": {
+    "compressor": "shrinkler",
+    "ratio": 43.9
+  }
+}
