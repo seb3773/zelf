@@ -1210,6 +1210,14 @@ deb: packer
 tar: packer
 	@STATIC=$(STATIC) bash tools/create_tar.sh
 
+.PHONY: rpm
+rpm: packer
+	@STATIC=$(STATIC) bash tools/create_rpm.sh
+
+.PHONY: apk
+apk: packer
+	@STATIC=$(STATIC) bash tools/create_apk.sh
+
 .PHONY: install_dependencies
 install_dependencies:
 	@bash tools/install_dependencies.sh
