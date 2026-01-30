@@ -267,10 +267,15 @@ For exhaustive architecture and development details:
 - **[README_dev.md](README_dev.md)**: Comprehensive developer guide (Architecture, Codecs, ML, Stubs).
 
 Other reference documents:
-- `doc/ZELF_ANALYSIS_REPORT.md`: Technical analysis report (Architecture & Analysis).
-- `doc/STUB_LOADER_INTERNALS.md`: Stub/loader low-level details.
-- `doc/Predictor_Integration_and_Guide.md`: ML pipeline and predictors.
-- `doc/ANALYSE_SYSTEME_STATS_ML.md`: Statistical analyses.
+
+- **[STUB_LOADER_INTERNALS.md](doc/STUB_LOADER_INTERNALS.md)**: Stub/loader low-level details.
+- **[INTERNALS.md](doc/INTERNALS.md)**: Stub/Loader Technical Notes
+- **[stub-friendly-codec.md](doc/stub-friendly-codec.md)**: Detailed Constraints for "Stub-Friendly" Decompressors
+- **[compressed_decompressor.md](doc/compressed_decompressor.md)**: Two-stage stub mechanism
+- **[Predictor_Integration_and_Guide.md](doc/Predictor_Integration_and_Guide.md)**: ML pipeline and predictors.
+- **[ANALYSE_SYSTEME_STATS_ML.md](doc/ANALYSE_SYSTEME_STATS_ML.md)**: Statistical analyses.
+- **[multiarch_build_pipeline.md](doc/multiarch_build_pipeline.md)**: Describes how zelf is built as a host binary while embedding decompression stubs for one or more target architectures.
+- **[ZELF_ANALYSIS_REPORT.md](doc/ZELF_ANALYSIS_REPORT.md)**: Technical analysis report (Architecture & Analysis).
 
 ## License
 Main license: GPLv3, subject to licenses of bundled components (see codec/filter sources).
